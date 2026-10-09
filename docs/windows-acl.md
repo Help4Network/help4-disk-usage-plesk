@@ -30,14 +30,17 @@ $protected = @(
     'C:\PleskModule\help4-disk-usage\htdocs',
     'C:\Program Files\Python313'
 ) | ConvertTo-Json -Compress
+$encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($protected))
 & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -NoLogo -NoProfile -NonInteractive -File $script `
-    -PrivateDirectory $private -ProtectedPathsJson $protected `
+    -PrivateDirectory $private -ProtectedPathsBase64 $encoded `
     -PanelUser 'psaadm' -MaxObjects 4096 -MaxSeconds 10
 if ($LASTEXITCODE -ne 0) { throw 'ACL preflight did not pass; do not approve shared hosting.' }
 ```
 
 No execution-policy bypass is included. If execution is blocked, follow the organization's reviewed signing/execution policy; do not weaken it for this preview. The native PHP wrapper selects 64-bit Windows PowerShell, including Sysnative when required, so the local-account module is available on a 64-bit server.
+
+The path-list argument is Base64-encoded UTF-8 JSON to avoid Windows PowerShell 5.1 native argument quoting differences. This is transport encoding, not encryption or authorization. The helper still requires an array of string paths and validates each path before inspection.
 
 The default native command checks **Python's executable only**, not every DLL, standard-library file, helper, launcher or search-path directory it can load. The expanded check can inspect selected runtime trees, but is limited to 8 selected paths and 4,096 objects. The default is 512 objects. A large runtime that exceeds the limit does not pass; do not increase a cap without reviewing the implementation. Use independent Windows security tooling and an administrator-reviewed runtime installation to finish that gate.
 

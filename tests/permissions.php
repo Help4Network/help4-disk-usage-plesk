@@ -37,7 +37,7 @@ if (PHP_OS_FAMILY === 'Windows') {
     check(Modules_Help4DiskUsage_Permissions::check() === $safe, 'Unexpected fields returned');
     $command = Modules_Help4DiskUsage_Process::$command;
     check(!in_array('-ExecutionPolicy', $command, true) && !in_array('Bypass', $command, true), 'Execution policy bypass');
-    check(count(json_decode($command[array_search('-ProtectedPathsJson', $command, true) + 1], true)) === 3,
+    check(count(json_decode(base64_decode($command[array_search('-ProtectedPathsBase64', $command, true) + 1], true), true)) === 3,
         'Collector, web assets and executable not all selected');
 }
 echo "Permission diagnostic platform, bounded command and fail-closed response tests passed\n";

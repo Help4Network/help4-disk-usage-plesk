@@ -114,12 +114,25 @@ try {
     Fails { Get-H4AclPreflight $private @($code) '*' } 'invalid_panel_user'
     $cli = Join-Path $PSScriptRoot '../extension/plib/collector/windows-acl.ps1'
     $shell = (Get-Process -Id $PID).Path
-    $body = & $shell -NoLogo -NoProfile -NonInteractive -File $cli -PrivateDirectory $private -ProtectedPathsJson '[]' -PanelUser $user
+    $body = & $shell -NoLogo -NoProfile -NonInteractive -File $cli -PrivateDirectory $private -ProtectedPathsBase64 'W10=' -PanelUser $user
     $exit = $LASTEXITCODE
     $failure = ($body -join "`n") | ConvertFrom-Json
     Check ($exit -eq 2 -and -not $failure.ok -and $failure.reason -eq 'invalid_limits') 'CLI fails closed'
     Check (($body -join "`n") -notmatch [regex]::Escape($base) -and
         ($body -join "`n") -notmatch [regex]::Escape($sid.Value)) 'CLI response omits private identities and paths'
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject @($code) -Compress)))
+    $body = & $shell -NoLogo -NoProfile -NonInteractive -File $cli -PrivateDirectory $private -ProtectedPathsBase64 $encoded -PanelUser $user
+    $exit = $LASTEXITCODE
+    $success = ($body -join "`n") | ConvertFrom-Json
+    Check ($exit -eq 0 -and $success.ok -and -not $success.native_panel_validated -and
+        -not $success.continuous_enforcement) 'CLI path-list round trip succeeds'
+    foreach ($json in @('null', '"not-an-array"', '[false]', '[{}]')) {
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json))
+        $body = & $shell -NoLogo -NoProfile -NonInteractive -File $cli -PrivateDirectory $private -ProtectedPathsBase64 $encoded -PanelUser $user
+        $exit = $LASTEXITCODE
+        $failure = ($body -join "`n") | ConvertFrom-Json
+        Check ($exit -eq 2 -and -not $failure.ok -and $failure.reason -eq 'unsafe_path') 'CLI rejects non-array/non-string paths'
+    }
 } finally {
     if ([IO.Directory]::Exists($junction)) { [IO.Directory]::Delete($junction) }
     if ([IO.Directory]::Exists($base)) { Remove-Item -LiteralPath $base -Recurse -Force }

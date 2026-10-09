@@ -1,12 +1,16 @@
 #Requires -Version 5.1
-param([string]$PrivateDirectory = '', [string]$ProtectedPathsJson = '[]', [string]$PanelUser = 'psaadm',
+param([string]$PrivateDirectory = '', [string]$ProtectedPathsBase64 = 'W10=', [string]$PanelUser = 'psaadm',
       [int]$MaxObjects = 512, [int]$MaxSeconds = 10)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 try {
     Import-Module (Join-Path $PSScriptRoot 'WindowsAcl.psm1') -Force -WarningAction SilentlyContinue
-    $paths = @($ProtectedPathsJson | ConvertFrom-Json -ErrorAction Stop)
-    if (@($paths | Where-Object { $_ -isnot [string] }).Count) { throw 'unsafe_path' }
+    if ($ProtectedPathsBase64.Length -gt 65536) { throw 'invalid_limits' }
+    $json = [Text.UTF8Encoding]::new($false, $true).GetString([Convert]::FromBase64String($ProtectedPathsBase64))
+    # A property preserves empty arrays in both Windows PowerShell 5.1 and 7.
+    $decoded = (('{"paths":' + $json + '}') | ConvertFrom-Json -ErrorAction Stop).paths
+    if ($decoded -isnot [Array] -or @($decoded | Where-Object { $_ -isnot [string] }).Count) { throw 'unsafe_path' }
+    $paths = [string[]]$decoded
     Get-H4AclPreflight $PrivateDirectory $paths $PanelUser $MaxObjects $MaxSeconds | ConvertTo-Json -Compress
     exit 0
 } catch {

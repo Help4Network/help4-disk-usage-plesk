@@ -13,10 +13,10 @@ class Modules_Help4DiskUsage_Permissions
         if (!is_file($shell)) { throw new RuntimeException('Windows runtime unavailable'); }
         $command = [$shell, '-NoLogo', '-NoProfile', '-NonInteractive', '-File',
             pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'windows-acl.ps1',
-            '-PrivateDirectory', Modules_Help4DiskUsage_Store::directory(), '-ProtectedPathsJson',
-            json_encode([Modules_Help4DiskUsage_Store::policy()['python'],
+            '-PrivateDirectory', Modules_Help4DiskUsage_Store::directory(), '-ProtectedPathsBase64',
+            base64_encode(json_encode([Modules_Help4DiskUsage_Store::policy()['python'],
                          rtrim(pm_Context::getPlibDir(), '/\\'),
-                         rtrim(pm_Context::getHtdocsDir(), '/\\')], JSON_THROW_ON_ERROR)];
+                         rtrim(pm_Context::getHtdocsDir(), '/\\')], JSON_THROW_ON_ERROR))];
         $capture = Modules_Help4DiskUsage_Process::run($command, 12, 16384);
         $result = json_decode($capture['output'], true, 8, JSON_THROW_ON_ERROR);
         if ($capture['exit'] !== 0 || !is_array($result) || ($result['schema'] ?? 0) !== 1 ||
