@@ -1,0 +1,26 @@
+# Validation And 1.0 Release Gates
+
+0.1.0 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
+
+## Automated
+
+Linux: no-follow, replaced-directory identity, hidden names, sparse logical bytes, stale age, entry/directory bounds, no absolute-path output. Windows: actual Win32 handles, junction rejection, pinned-ancestor rename denial, UNC/device/ADS/root rejection. Windows tests must run on Windows, not just skip on Linux. PHP: access denial, traversal rejection, cached membership, correct parent jump, export stripping and formula neutralization.
+
+## Native Matrix: Both Linux And Windows
+
+Create two unrelated customers, owned reseller subscriptions, an unrelated reseller and a limited additional user using synthetic example.test names only.
+
+1. Install ZIP; confirm native left navigation/header remain on admin, reseller, customer and impersonated pages.
+2. Deny foreign index/refresh/export/open actions without revealing foreign identity, path or report presence.
+3. Valid/missing/invalid CSRF; POST-only refresh and stable 303 GET. Five minutes idle must not trigger reloads or scans.
+4. Simultaneous requests: one scanner, finite queue, actor/subscription/interval/server limits.
+5. Source/runtime/private-storage ownership. Windows inherited/explicit ACLs deny hosting users report/state access and executable writes.
+6. Foreign-target symlinks/junctions and replacement races reveal no target names/paths/sizes. Partial/skipped coverage is explicit.
+7. File -> parent, tree -> itself native File Manager, spaces/Unicode names. Panel itself refuses unauthorized junction traversal.
+8. Ownership/home change or delete/recreate invalidates cache/export/jumps immediately; queued workers abort.
+9. Desktop and actual 390px mobile rendering, no overlap/console errors, deliberate table scrolling, stable shell.
+10. Versioned upgrade/downgrade, cache compatibility and native uninstall with pending tasks leave no exposed worker/data.
+
+## Remaining 1.0 Gates
+
+Native Windows/Linux panel QA, Windows ACL installer verification, service-plan mappings, scheduled oldest-cache rotation, release-discovery/admin upgrade UI, native WHMCS connection/deployment/freshness, independent security review and version-matched tutorials. Pending features must not be advertised as available.

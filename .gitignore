@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+dist/
+node_modules/
+evidence/
+.env
+*.pem
+*.key

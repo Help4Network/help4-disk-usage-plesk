@@ -1,0 +1,83 @@
+<?php
+$esc = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); };
+$url = function ($action, $query = []) { return pm_Context::getActionUrl('index', $action) . ($query ? '?' . http_build_query($query) : ''); };
+$bytes = function ($n) { foreach (['B', 'KiB', 'MiB', 'GiB', 'TiB'] as $unit) { if (abs($n) < 1024 || $unit === 'TiB') { return number_format($n, $unit === 'B' ? 0 : 1) . ' ' . $unit; } $n /= 1024; } };
+$d = $this->domain;
+$r = $this->report;
+?>
+<div class="h4-audit">
+  <div class="h4-toolbar">
+    <form method="get" action="<?= $esc($url('index')) ?>">
+      <label for="h4-domain">Subscription</label>
+      <select id="h4-domain" name="domain">
+        <?php foreach ($this->domains as $item): ?>
+          <option value="<?= (int)$item->getId() ?>" <?= $d && $item->getId() === $d->getId() ? 'selected' : '' ?>><?= $esc($item->getName()) ?></option>
+        <?php endforeach ?>
+      </select><button type="submit">View</button>
+    </form>
+    <?php if ($d): ?>
+      <form method="post" action="<?= $esc($url('refresh')) ?>">
+        <input type="hidden" name="csrf" value="<?= $esc($this->csrf) ?>">
+        <input type="hidden" name="domain" value="<?= (int)$d->getId() ?>">
+        <button type="submit" class="h4-primary" <?= $this->pending ? 'disabled' : '' ?>><?= $this->pending ? 'Scan queued' : 'Refresh scan' ?></button>
+      </form>
+      <a href="<?= $esc($url('index', ['domain' => $d->getId()])) ?>">Check status</a>
+    <?php endif ?>
+    <?php if ($this->admin): ?><a href="<?= $esc($url('settings')) ?>">Scan settings</a><?php endif ?>
+  </div>
+  <?php if (!$d): ?><p role="status">No accessible subscriptions.</p>
+  <?php elseif (!$r): ?><p role="status" class="h4-notice">No report yet. <?= $this->pending ? 'A background scan is queued.' : 'Request a scan to build the first report.' ?></p>
+  <?php else: ?>
+    <p class="h4-status">Last scanned <time><?= $esc($r['scanned_at']) ?></time> · <?= $esc($r['duration_seconds']) ?> seconds ·
+      <strong><?= $r['complete'] ? 'Complete' : 'Partial coverage' ?></strong>
+      <?= time() - strtotime($r['scanned_at']) > $this->ttl ? ' · Stale report' : '' ?> · <?= (int)$r['errors'] ?> skipped errors
+    </p>
+    <?php if (!$r['complete']): ?><p class="h4-notice" role="status">Partial totals are lower bounds. Growth comparisons are unavailable. <?= $esc($r['limit'] ?? 'Some entries could not be inspected.') ?></p><?php endif ?>
+    <dl class="h4-totals">
+      <div><dt>Scanned file bytes</dt><dd><?= $esc($bytes($r['bytes'])) ?></dd></div>
+      <div><dt>Filesystem entries</dt><dd><?= number_format($r['entries']) ?></dd></div>
+      <div><dt>Files</dt><dd><?= number_format($r['files']) ?></dd></div>
+      <div><dt>Growth since prior scan</dt><dd><?= $r['growth_bytes'] === null ? 'Not comparable' : $esc($bytes($r['growth_bytes'])) ?></dd></div>
+    </dl>
+    <div class="h4-categories">
+      <?php foreach ($r['categories'] as $kind => $size): ?><span><?= $esc(ucfirst($kind)) ?> <strong><?= $esc($bytes($size)) ?></strong></span><?php endforeach ?>
+    </div>
+    <nav class="h4-tabs" aria-label="Offender views">
+      <?php foreach (['largest_files' => 'Largest files', 'largest_trees' => 'Largest trees', 'entry_trees' => 'Entry-heavy trees', 'stale_files' => 'Stale large files'] as $key => $label): ?>
+        <a <?= $this->result['section'] === $key ? 'aria-current="page"' : '' ?> href="<?= $esc($url('index', ['domain' => $d->getId(), 'section' => $key])) ?>"><?= $esc($label) ?></a>
+      <?php endforeach ?>
+    </nav>
+    <form class="h4-filter" method="get" action="<?= $esc($url('index')) ?>">
+      <input type="hidden" name="domain" value="<?= (int)$d->getId() ?>">
+      <input type="hidden" name="section" value="<?= $esc($this->result['section']) ?>">
+      <label for="h4-search">Path</label><input type="search" id="h4-search" name="search" maxlength="128" value="<?= $esc($this->search) ?>">
+      <label for="h4-sort">Sort</label><select id="h4-sort" name="sort">
+        <?php foreach (['bytes' => 'Largest first', 'entries' => 'Most entries', 'modified' => 'Recently changed', 'path' => 'Path A-Z'] as $key => $label): ?>
+          <option value="<?= $key ?>" <?= $this->sort === $key ? 'selected' : '' ?>><?= $label ?></option>
+        <?php endforeach ?>
+      </select><button type="submit">Apply</button>
+      <a href="<?= $esc($url('export', ['domain' => $d->getId(), 'format' => 'csv'])) ?>">CSV</a>
+      <a href="<?= $esc($url('export', ['domain' => $d->getId(), 'format' => 'json'])) ?>">JSON</a>
+    </form>
+    <div class="h4-table-wrap"><table class="h4-table">
+      <thead><tr><th scope="col">Relative path</th><th scope="col">Bytes</th><th scope="col">Entries</th><th scope="col">Review</th></tr></thead>
+      <tbody>
+        <?php foreach ($this->result['items'] as $row): ?>
+          <tr><td><code><?= $esc($row['path']) ?></code><button class="h4-copy" type="button" data-copy="<?= $esc($row['path']) ?>" aria-label="Copy relative path" title="Copy relative path">&#10697;</button></td>
+            <td><?= $esc($bytes($row['bytes'])) ?></td><td><?= isset($row['entries']) ? number_format($row['entries']) : '-' ?></td>
+            <td><a target="_blank" rel="noopener noreferrer" href="<?= $esc($url('open', ['domain' => $d->getId(), 'path' => $row['path'], 'kind' => $row['kind']])) ?>">Open in File Manager</a><small><?= $esc($row['hint']) ?></small></td>
+          </tr>
+        <?php endforeach ?>
+        <?php if (!$this->result['items']): ?><tr><td colspan="4">No matching offenders in this retained ranking.</td></tr><?php endif ?>
+      </tbody>
+    </table></div>
+    <nav class="h4-pagination" aria-label="Report pages">
+      <span><?= (int)$this->result['count'] ?> retained results · Page <?= (int)$this->result['page'] ?> of <?= (int)$this->result['pages'] ?></span>
+      <?php foreach (['Previous' => -1, 'Next' => 1] as $label => $delta): $page = $this->result['page'] + $delta; if ($page < 1 || $page > $this->result['pages']) { continue; } ?>
+        <a href="<?= $esc($url('index', ['domain' => $d->getId(), 'section' => $this->result['section'], 'page' => $page, 'search' => $this->search, 'sort' => $this->sort])) ?>"><?= $label ?></a>
+      <?php endforeach ?>
+    </nav>
+  <?php endif ?>
+  <p class="h4-copy-status" aria-live="polite"></p>
+  <footer class="h4-byline"><img src="<?= $esc(pm_Context::getBaseUrl() . 'images/h4.png') ?>" alt="" width="20" height="20">Built by <a href="https://help4network.com" target="_blank" rel="noopener noreferrer">Help4 Network</a></footer>
+</div>

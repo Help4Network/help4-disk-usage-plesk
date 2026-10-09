@@ -1,0 +1,14 @@
+<?php $esc = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }; ?>
+<div class="h4-audit">
+  <p><a href="<?= $esc(pm_Context::getActionUrl('index', 'index')) ?>">Back to reports</a></p>
+  <form class="h4-settings" method="post" action="<?= $esc(pm_Context::getActionUrl('index', 'settings')) ?>">
+    <input type="hidden" name="csrf" value="<?= $esc($this->csrf) ?>">
+    <?php foreach (['title' => 'Report title', 'python' => 'Python executable', 'hourly' => 'Customer refreshes per hour', 'minimum_interval' => 'Minimum refresh interval (seconds)', 'seconds' => 'Scan runtime (seconds)', 'ttl' => 'Report freshness TTL (seconds)', 'global_hourly' => 'Server scan requests per hour', 'queue_limit' => 'Maximum queued subscriptions'] as $key => $label): ?>
+      <label for="h4-<?= $key ?>"><?= $label ?></label><input id="h4-<?= $key ?>" name="<?= $key ?>" type="<?= in_array($key, ['title', 'python']) ? 'text' : 'number' ?>" value="<?= $esc($this->policy[$key]) ?>" required>
+    <?php endforeach ?>
+    <label for="h4-overrides">Subscription limit overrides (JSON)</label>
+    <textarea id="h4-overrides" name="overrides_json" rows="5"><?= $esc(json_encode($this->policy['overrides'], JSON_PRETTY_PRINT | JSON_FORCE_OBJECT)) ?></textarea>
+    <button type="submit" class="h4-primary">Save settings</button>
+  </form>
+  <footer class="h4-byline">Built by <a href="https://help4network.com">Help4 Network</a></footer>
+</div>
