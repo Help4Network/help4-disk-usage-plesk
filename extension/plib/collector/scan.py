@@ -13,7 +13,7 @@ import time
 
 def safe_relative(path):
     return (isinstance(path, str) and len(path) <= 4096 and
-            not any(ord(c) < 32 for c in path) and "\\" not in path and
+            not any(ord(c) < 32 or 0xd800 <= ord(c) <= 0xdfff for c in path) and "\\" not in path and
             ":" not in path and not path.startswith("/") and
             all(p not in ("", "..") for p in path.split("/")))
 
@@ -100,7 +100,7 @@ class PosixTree:
 
 
 class WindowsTree:
-    """Pin every ancestor against rename; never dereference a reparse point."""
+    """Enumerate and open children relative to checked native directory handles."""
     def __init__(self, root):
         from ctypes import wintypes
         self.w = wintypes
@@ -109,6 +109,37 @@ class WindowsTree:
                                       wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
         self.k.CreateFileW.restype = wintypes.HANDLE
         self.k.CloseHandle.argtypes = [wintypes.HANDLE]
+        self.k.GetFileInformationByHandleEx.argtypes = [wintypes.HANDLE, ctypes.c_int,
+                                                        wintypes.LPVOID, wintypes.DWORD]
+        self.k.GetFileInformationByHandleEx.restype = wintypes.BOOL
+        self.n = ctypes.WinDLL("ntdll")
+        class UnicodeString(ctypes.Structure):
+            _fields_ = [("Length", wintypes.USHORT), ("MaximumLength", wintypes.USHORT),
+                        ("Buffer", wintypes.LPWSTR)]
+        class ObjectAttributes(ctypes.Structure):
+            _fields_ = [("Length", wintypes.ULONG), ("RootDirectory", wintypes.HANDLE),
+                        ("ObjectName", ctypes.POINTER(UnicodeString)), ("Attributes", wintypes.ULONG),
+                        ("SecurityDescriptor", wintypes.LPVOID), ("SecurityQualityOfService", wintypes.LPVOID)]
+        class IoStatus(ctypes.Structure):
+            _fields_ = [("Status", ctypes.c_void_p), ("Information", ctypes.c_size_t)]
+        class DirectoryInfo(ctypes.Structure):
+            _fields_ = [("NextEntryOffset", wintypes.DWORD), ("FileIndex", wintypes.DWORD),
+                        ("CreationTime", ctypes.c_longlong), ("LastAccessTime", ctypes.c_longlong),
+                        ("LastWriteTime", ctypes.c_longlong), ("ChangeTime", ctypes.c_longlong),
+                        ("EndOfFile", ctypes.c_longlong), ("AllocationSize", ctypes.c_longlong),
+                        ("FileAttributes", wintypes.DWORD), ("FileNameLength", wintypes.DWORD),
+                        ("EaSize", wintypes.DWORD), ("ShortNameLength", ctypes.c_byte),
+                        ("ShortName", wintypes.WCHAR * 12), ("FileId", ctypes.c_longlong),
+                        ("FileName", wintypes.WCHAR * 1)]
+        self.UnicodeString, self.ObjectAttributes = UnicodeString, ObjectAttributes
+        self.IoStatus, self.DirectoryInfo = IoStatus, DirectoryInfo
+        self.n.NtCreateFile.argtypes = [ctypes.POINTER(wintypes.HANDLE), wintypes.DWORD,
+            ctypes.POINTER(ObjectAttributes), ctypes.POINTER(IoStatus), wintypes.LPVOID,
+            wintypes.ULONG, wintypes.ULONG, wintypes.ULONG, wintypes.ULONG,
+            wintypes.LPVOID, wintypes.ULONG]
+        self.n.NtCreateFile.restype = ctypes.c_long
+        self.n.RtlNtStatusToDosError.argtypes = [ctypes.c_long]
+        self.n.RtlNtStatusToDosError.restype = wintypes.ULONG
         class Info(ctypes.Structure):
             _fields_ = [("attributes", wintypes.DWORD), ("created", wintypes.FILETIME),
                         ("accessed", wintypes.FILETIME), ("modified", wintypes.FILETIME),
@@ -129,46 +160,57 @@ class WindowsTree:
         self.parts = tail[1:].split("\\")
         self.ancestors = []
 
-    def open(self, path, pin_directory=False):
-        # Directory listing access participates in Windows sharing checks;
-        # attributes-only handles do not reliably prevent directory renames.
-        h = self.k.CreateFileW(path, 0x81 if pin_directory else 0x80, 0x3, None, 3, 0x02200000, None)
-        if h == ctypes.c_void_p(-1).value:
-            raise ctypes.WinError(ctypes.get_last_error())
+    def details(self, h):
         data = self.Info()
         if not self.k.GetFileInformationByHandle(h, ctypes.byref(data)):
-            self.k.CloseHandle(h)
             raise ctypes.WinError(ctypes.get_last_error())
         if data.attributes & 0x400:
-            self.k.CloseHandle(h)
             raise OSError("Reparse point rejected")
         modified = ((data.modified.dwHighDateTime << 32) | data.modified.dwLowDateTime)
         info = {"kind": "directory" if data.attributes & 0x10 else "file",
                 "bytes": (data.size_high << 32) | data.size_low,
                 "modified": int(modified / 10000000 - 11644473600),
                 "identity": (data.volume, data.id_high, data.id_low)}
-        if info["kind"] == "directory" and not pin_directory:
+        return info
+
+    def open_child(self, parent, name, directory=False):
+        if (not safe_relative(name) or "/" in name or name in (".", "..") or
+                name.endswith((".", " "))):
+            raise OSError("Unsafe Windows name")
+        buffer = ctypes.create_unicode_buffer(name)
+        length = len(name.encode("utf-16-le"))
+        string = self.UnicodeString(length, length + 2, ctypes.cast(buffer, self.w.LPWSTR))
+        attributes = self.ObjectAttributes(ctypes.sizeof(self.ObjectAttributes), parent,
+            ctypes.pointer(string), 0x1040, None, None)  # OBJ_DONT_REPARSE | OBJ_CASE_INSENSITIVE
+        h, status = self.w.HANDLE(), self.IoStatus()
+        result = self.n.NtCreateFile(ctypes.byref(h), 0x100081 if directory else 0x100080,
+            ctypes.byref(attributes), ctypes.byref(status), None, 0, 1 if directory else 3,
+            1, 0x200020, None, 0)  # FILE_OPEN_REPARSE_POINT | synchronous, FILE_OPEN
+        if result < 0:
+            raise ctypes.WinError(self.n.RtlNtStatusToDosError(result))
+        try:
+            info = self.details(h)
+            if directory and info["kind"] != "directory":
+                raise OSError("Not a directory")
+            if info["identity"][0] != self.volume:
+                raise OSError("Cross-volume entry rejected")
+            return h, info
+        except BaseException:
             self.k.CloseHandle(h)
-            pinned, current = self.open(path, pin_directory=True)
-            if current["kind"] != "directory" or current["identity"] != info["identity"]:
-                self.k.CloseHandle(pinned)
-                raise OSError("Directory changed while pinning")
-            return pinned, current
-        return h, info
+            raise
 
     def __enter__(self):
         try:
-            path = self.drive + "\\"
-            for part in [None] + self.parts:
-                if part is not None:
-                    path = ntpath.join(path, part)
-                h, info = self.open(path)
-                if info["kind"] != "directory":
-                    self.k.CloseHandle(h)
-                    raise OSError("Home ancestor is not a directory")
-                self.ancestors.append(h)
-            self.handle = self.root
+            h = self.k.CreateFileW(self.drive + "\\", 0x81, 1, None, 3, 0x02200000, None)
+            if h == ctypes.c_void_p(-1).value:
+                raise ctypes.WinError(ctypes.get_last_error())
+            self.ancestors.append(h)
+            info = self.details(h)
             self.volume = info["identity"][0]
+            for part in self.parts:
+                h, info = self.open_child(h, part, directory=True)
+                self.ancestors.append(h)
+            self.handle = h
             return self
         except BaseException:
             self.__exit__()
@@ -180,27 +222,45 @@ class WindowsTree:
         self.ancestors = []
 
     def entries(self, handle):
-        with os.scandir(handle) as entries:
-            for entry in entries:
-                yield entry.name
+        buffer = ctypes.create_string_buffer(65536)
+        offset = self.DirectoryInfo.FileName.offset
+        info_class = 11
+        while True:
+            self.details(handle)
+            if not self.k.GetFileInformationByHandleEx(handle, info_class, buffer, len(buffer)):
+                error = ctypes.get_last_error()
+                if error == 18:  # ERROR_NO_MORE_FILES
+                    return
+                raise ctypes.WinError(error)
+            info_class = 10
+            cursor = 0
+            while True:
+                entry = self.DirectoryInfo.from_buffer(buffer, cursor)
+                length = entry.FileNameLength
+                if length % 2 or cursor + offset + length > len(buffer):
+                    raise OSError("Invalid directory record")
+                name = ctypes.string_at(ctypes.addressof(buffer) + cursor + offset, length).decode("utf-16-le", "surrogatepass")
+                if name not in (".", ".."):
+                    yield name
+                step = entry.NextEntryOffset
+                if not step:
+                    break
+                if step < offset + length or cursor + step + ctypes.sizeof(self.DirectoryInfo) > len(buffer):
+                    raise OSError("Invalid directory offset")
+                cursor += step
 
     def info(self, handle, name):
-        if not safe_relative(name) or name in (".", "..") or name.endswith((".", " ")):
-            raise OSError("Unsafe Windows name")
-        h, info = self.open(ntpath.join(handle, name))
+        h, info = self.open_child(handle, name)
         self.k.CloseHandle(h)
-        if info["identity"][0] != self.volume:
-            raise OSError("Cross-volume entry rejected")
         return info
 
     @contextlib.contextmanager
     def child(self, handle, name, info):
-        path = ntpath.join(handle, name)
-        h, current = self.open(path)
+        h, current = self.open_child(handle, name, directory=True)
         try:
             if current["kind"] != "directory" or current["identity"] != info["identity"]:
                 raise OSError("Directory changed during scan")
-            yield path
+            yield h
         finally:
             self.k.CloseHandle(h)
 
@@ -248,6 +308,7 @@ def scan(root, seconds=60, max_entries=2000000, max_directories=50000, depth=64,
                     total_entries += 1
                     if not safe_relative(path):
                         report["skipped"] += 1
+                        report["complete"] = False
                         continue
                     try:
                         info = tree.info(handle, name)
@@ -276,6 +337,7 @@ def scan(root, seconds=60, max_entries=2000000, max_directories=50000, depth=64,
                                 retain(stale, size, row)
                         else:
                             report["skipped"] += 1
+                            report["complete"] = False
                     except OSError:
                         report["errors"] += 1
                         report["complete"] = False

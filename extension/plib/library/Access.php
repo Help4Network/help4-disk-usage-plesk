@@ -8,9 +8,14 @@ class Modules_Help4DiskUsage_Access
 
     public static function authorize($client, $domain, $admin = false)
     {
-        if (!$admin && !$client->hasAccessToDomain($domain->getId())) {
+        if (!($admin && $client->isAdmin()) && !$client->hasAccessToDomain($domain->getId())) {
             throw new RuntimeException('Subscription unavailable');
         }
+    }
+
+    public static function authorizeQueued($client, $domain, array $pending)
+    {
+        self::authorize($client, $domain, ($pending['admin'] ?? false) === true && $client->isAdmin());
     }
 
     public static function domain($id)

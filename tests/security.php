@@ -4,13 +4,20 @@ require __DIR__ . '/../extension/plib/library/Report.php';
 require __DIR__ . '/../extension/plib/library/Store.php';
 function check($value, $message) { if (!$value) { throw new RuntimeException($message); } }
 function denied($callback) { try { $callback(); } catch (RuntimeException $e) { return; } throw new RuntimeException('Expected denial'); }
-class FakeClient { public $allowed = [1]; public function hasAccessToDomain($id) { return in_array($id, $this->allowed, true); } }
+class FakeClient { public $allowed = [1]; public $admin = false; public function isAdmin() { return $this->admin; } public function hasAccessToDomain($id) { return in_array($id, $this->allowed, true); } }
 class FakeDomain { public function getId() { return 1; } }
 $client = new FakeClient();
 $domain = new FakeDomain();
 Modules_Help4DiskUsage_Access::authorize($client, $domain);
 $client->allowed = [];
 denied(function () use ($client, $domain) { Modules_Help4DiskUsage_Access::authorize($client, $domain); });
+denied(function () use ($client, $domain) { Modules_Help4DiskUsage_Access::authorize($client, $domain, true); });
+$client->admin = true;
+denied(function () use ($client, $domain) { Modules_Help4DiskUsage_Access::authorizeQueued($client, $domain, ['admin' => false]); });
+Modules_Help4DiskUsage_Access::authorizeQueued($client, $domain, ['admin' => true]);
+$client->admin = false;
+denied(function () use ($client, $domain) { Modules_Help4DiskUsage_Access::authorizeQueued($client, $domain, ['admin' => true]); });
+denied(function () use ($client, $domain) { Modules_Help4DiskUsage_Access::authorizeQueued($client, $domain, []); });
 foreach (['../neighbor', '/etc/passwd', 'C:/secret', 'a\\b', "x\0y", 'a//b'] as $path) {
     denied(function () use ($path) { Modules_Help4DiskUsage_Access::relative($path); });
 }

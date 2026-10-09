@@ -48,7 +48,7 @@ class IndexController extends pm_Controller_Action
         $this->view->ttl = $policy['ttl'];
         $this->view->pending = isset(Modules_Help4DiskUsage_Store::read('state')['pending'][$domain->getId()]);
         $this->view->search = substr((string)$this->getParam('search', ''), 0, 128);
-        $this->view->sort = (string)$this->getParam('sort', 'bytes');
+        $this->view->sort = (string)$this->getParam('sort', $this->getParam('section') === 'entry_trees' ? 'entries' : 'bytes');
         $this->view->result = Modules_Help4DiskUsage_Report::rows($report ?? [], $this->getParam('section', 'largest_files'),
             $this->view->search, $this->view->sort, $this->getParam('page', 1));
     }

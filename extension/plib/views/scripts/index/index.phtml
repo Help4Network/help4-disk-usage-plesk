@@ -30,7 +30,7 @@ $r = $this->report;
   <?php else: ?>
     <p class="h4-status">Last scanned <time><?= $esc($r['scanned_at']) ?></time> · <?= $esc($r['duration_seconds']) ?> seconds ·
       <strong><?= $r['complete'] ? 'Complete' : 'Partial coverage' ?></strong>
-      <?= time() - strtotime($r['scanned_at']) > $this->ttl ? ' · Stale report' : '' ?> · <?= (int)$r['errors'] ?> skipped errors
+      <?= time() - strtotime($r['scanned_at']) > $this->ttl ? ' · Stale report' : '' ?> · <?= (int)$r['errors'] ?> read errors · <?= (int)($r['skipped'] ?? 0) ?> omitted entries
     </p>
     <?php if (!$r['complete']): ?><p class="h4-notice" role="status">Partial totals are lower bounds. Growth comparisons are unavailable. <?= $esc($r['limit'] ?? 'Some entries could not be inspected.') ?></p><?php endif ?>
     <dl class="h4-totals">

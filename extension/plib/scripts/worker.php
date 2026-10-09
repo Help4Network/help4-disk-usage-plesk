@@ -21,7 +21,7 @@ try {
     }
     $domain = pm_Domain::getByDomainId((int)$id);
     $actor = pm_Client::getByClientId((int)$pending['actor']);
-    Modules_Help4DiskUsage_Access::authorize($actor, $domain, $actor->isAdmin());
+    Modules_Help4DiskUsage_Access::authorizeQueued($actor, $domain, $pending);
     $binding = Modules_Help4DiskUsage_Access::binding($domain);
     if (!hash_equals($pending['binding'], $binding)) {
         throw new RuntimeException('Subscription identity changed');
@@ -60,6 +60,9 @@ try {
             usleep(50000);
         } while (true);
         $output .= stream_get_contents($pipes[1]);
+        if (strlen($output) > 4 * 1024 * 1024) {
+            throw new RuntimeException('Collector exceeded output limit');
+        }
     } finally {
         fclose($pipes[1]);
         fclose($pipes[2]);
@@ -70,7 +73,7 @@ try {
         throw new RuntimeException('Collector did not produce a valid report');
     }
     $current = pm_Domain::getByDomainId((int)$id);
-    Modules_Help4DiskUsage_Access::authorize(pm_Client::getByClientId((int)$pending['actor']), $current, $actor->isAdmin());
+    Modules_Help4DiskUsage_Access::authorizeQueued(pm_Client::getByClientId((int)$pending['actor']), $current, $pending);
     if (!hash_equals($binding, Modules_Help4DiskUsage_Access::binding($current))) {
         throw new RuntimeException('Subscription identity changed during scan');
     }

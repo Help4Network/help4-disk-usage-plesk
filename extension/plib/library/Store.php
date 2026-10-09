@@ -7,6 +7,12 @@ class Modules_Help4DiskUsage_Store
         if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
             throw new RuntimeException('Private audit storage unavailable');
         }
+        if (PHP_OS_FAMILY !== 'Windows' && function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $panel = posix_getpwnam('psaadm');
+            if (!$panel || !chown($dir, $panel['uid']) || !chgrp($dir, $panel['gid']) || !chmod($dir, 0700)) {
+                throw new RuntimeException('Private panel storage ownership unavailable');
+            }
+        }
         return $dir;
     }
 
@@ -29,6 +35,11 @@ class Modules_Help4DiskUsage_Store
         $temp = tempnam($dir, 'audit-');
         try {
             chmod($temp, 0600);
+            if (PHP_OS_FAMILY !== 'Windows' && function_exists('posix_geteuid') && posix_geteuid() === 0) {
+                if (!chown($temp, fileowner($dir)) || !chgrp($temp, filegroup($dir))) {
+                    throw new RuntimeException('Report ownership unavailable');
+                }
+            }
             if (file_put_contents($temp, json_encode($value, JSON_THROW_ON_ERROR), LOCK_EX) === false ||
                 !rename($temp, $dir . DIRECTORY_SEPARATOR . $name . '.json')) {
                 throw new RuntimeException('Audit storage unavailable');
@@ -45,6 +56,14 @@ class Modules_Help4DiskUsage_Store
         $handle = fopen(self::directory() . DIRECTORY_SEPARATOR . 'state.lock', 'c');
         if (!$handle || !flock($handle, LOCK_EX)) {
             throw new RuntimeException('Audit queue unavailable');
+        }
+        if (PHP_OS_FAMILY !== 'Windows' && function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $path = self::directory() . DIRECTORY_SEPARATOR . 'state.lock';
+            if (!chown($path, fileowner(self::directory())) || !chgrp($path, filegroup(self::directory())) || !chmod($path, 0600)) {
+                flock($handle, LOCK_UN);
+                fclose($handle);
+                throw new RuntimeException('Queue lock ownership unavailable');
+            }
         }
         try {
             return $callback();
@@ -145,7 +164,8 @@ class Modules_Help4DiskUsage_Store
             }
             $token = bin2hex(random_bytes(16));
             $state['pending'][$id] = ['time' => $now, 'token' => $token, 'binding' => $binding,
-                'actor' => $actor->getId(), 'seconds' => $policy['seconds']];
+                'actor' => $actor->getId(), 'admin' => $admin === true && $actor->isAdmin(),
+                'seconds' => $policy['seconds']];
             $state['attempts'][] = ['time' => $now, 'domain' => $id, 'actor' => $actor->getId()];
             self::write('state', $state);
             return $token;

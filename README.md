@@ -2,7 +2,7 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
-**0.1.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and update gates must pass before stable 1.0.0. See [validation](docs/validation.md). Automated CI is not Plesk certification.
+**0.1.1 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and update gates must pass before stable 1.0.0. See [validation](docs/validation.md). Automated CI is not Plesk certification.
 
 ## Features
 
@@ -23,7 +23,7 @@ Plesk Obsidian 18.0.55+, administrator-installed **Python 3.10+**, local subscri
 | Platform | Default runtime setting | Collector protection |
 | --- | --- | --- |
 | Linux | `/usr/bin/python3` | Pinned descriptors, no-follow, device/inode identity checks |
-| Windows | `C:\Program Files\Python313\python.exe` (edit to actual path) | Win32 no-follow handles, ancestors pinned against rename |
+| Windows | `C:\Program Files\Python313\python.exe` (edit to actual path) | Handle-bound enumeration and child opens, no-reparse flags, pinned ancestors |
 
 Use your OS package manager or [official Windows Python installer](https://www.python.org/downloads/windows/). Select an absolute administrator-owned executable, never one writable by hosting users. Windows **ACLs**, not chmod, protect private reports/executables. UNC/network/device/ADS paths and reparse-point home ancestors are unsupported.
 
@@ -45,13 +45,13 @@ Verify `dist/SHA256SUMS`, then upload the built ZIP through **Extensions > My Ex
 
 ```sh
 # Linux root
-plesk bin extension --install /absolute/path/help4-disk-usage-0.1.0-1.zip
+plesk bin extension --install /absolute/path/help4-disk-usage-0.1.1-1.zip
 ```
 
 ```powershell
 # Windows elevated PowerShell
-Get-FileHash 'C:\Lab\help4-disk-usage-0.1.0-1.zip' -Algorithm SHA256
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.1.0-1.zip'
+Get-FileHash 'C:\Lab\help4-disk-usage-0.1.1-1.zip' -Algorithm SHA256
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.1.1-1.zip'
 ```
 
 Open **Disk Usage Audit** from native Plesk navigation. **Scan settings** selects the real Python executable and policy. Create synthetic unrelated customers/resellers first and follow [native validation](docs/validation.md). Click **Refresh scan**, then **Check status**. The scan runs in a background task; the customer page never auto-submits or refreshes itself.

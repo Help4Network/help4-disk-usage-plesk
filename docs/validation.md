@@ -1,10 +1,10 @@
 # Validation And 1.0 Release Gates
 
-0.1.0 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
+0.1.1 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
 
 ## Automated
 
-Linux: no-follow, replaced-directory identity, hidden names, sparse logical bytes, stale age, entry/directory bounds, no absolute-path output. Windows: actual Win32 handles, junction rejection, pinned-ancestor rename denial, UNC/device/ADS/root rejection. Windows tests must run on Windows, not just skip on Linux. PHP: access denial, traversal rejection, cached membership, correct parent jump, export stripping and formula neutralization.
+Linux: no-follow, replaced-directory identity, hidden/Unicode names, raw-byte filename partial report (including PHP decoding when installed), sparse logical bytes, stale age, entry/directory bounds, no absolute-path output. Windows: actual Win32 handles, handle-bound enumeration, junction rejection, post-check FSCTL reparse mutation, pre-opened writer rejection, pinned-ancestor rename denial, UNC/device/ADS/root rejection. Windows tests must run on Windows, not just skip on Linux. PHP: access denial, originating admin decision and fresh role recheck, traversal rejection, cached membership, correct parent jump, export stripping and formula neutralization.
 
 ## Native Matrix: Both Linux And Windows
 
