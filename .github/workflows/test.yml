@@ -40,6 +40,20 @@ jobs:
       - run: php tests/scheduler.php
       - run: php tests/runtime.php
       - run: php tests/process.php
+      - run: php tests/permissions.php
+
+  windows-acl:
+    name: Windows ACL preflight (${{ matrix.shell }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adversarial descriptors and real NTFS metadata
+        shell: ${{ matrix.shell }}
+        run: '& ./tests/windows-acl.ps1'
 
   linux-distros:
     name: Linux runtime (${{ matrix.image }})

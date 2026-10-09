@@ -1,5 +1,6 @@
 # 0.3.0 Development Preview
 
+- Add a CLI-only, read-only Windows NTFS ACL preflight for private audit files and selected module/runtime paths. Fail closed on exposed grants, foreign writes/owners, null/unsupported DACLs, reparse/unsafe paths and metadata/object/time limits; sanitize diagnostic output. Add PowerShell 5.1/7 policy and actual NTFS fixtures. It is not a permission repair, continuous enforcement or native Plesk certification; see the Windows ACL runbook and dependency/identity gates.
 - Add disabled-by-default native scheduled stale-report rotation with 1-4 queued subscriptions per tick, host/actor/subscription caps, finite admission attempts and a configurable 1-24 hour cooldown. Disabled plans remain disabled. Installation registration is idempotent; removal preserves unrelated tasks and refuses active/pending scans.
 - Add Python 3.10+ native filesystem capability diagnostics and checks before saving a runtime or traversing a subscription. CLI diagnostics do not certify native panel roles or Windows ACLs.
 - Recheck queued authorization, identity, policy and lease inside the publication state lock; disabling scheduled refresh revokes scheduled reservations.

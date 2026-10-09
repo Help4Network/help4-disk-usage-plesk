@@ -80,6 +80,8 @@ Queue reservations expire after enough time for the configured queue to drain at
 
 Run `plesk bin extension --exec help4-disk-usage doctor.php` on Linux, or `plesk bin extension.exe --exec help4-disk-usage doctor.php` on Windows, after configuring Python. This checks runtime capabilities without inspecting subscription contents; it does not certify storage ACLs or native panel behavior.
 
+Windows also includes an operator-run, read-only ACL preflight: `plesk bin extension.exe --exec help4-disk-usage permissions.php`. It fails on exposed private files, foreign-writable selected code/runtime paths, unsafe/reparse paths, unsupported ACLs or bounds. It makes no permission changes and reports native validation/continuous enforcement as false. Read the [Windows ACL runbook](docs/windows-acl.md) for exact scope, trusted identities, dependency gaps and the separate native hosting-user tests. It is not automatic enforcement in customer requests.
+
 ## Upgrade, Rollback And Uninstall
 
 The administrator **Software updates** page checks only the fixed repository's latest stable GitHub release. An explicit CSRF-protected check has a five-minute cooldown, verified TLS, no redirects, a six-second deadline and a 64 KiB metadata ceiling. It sends no subscription paths or account data. Failed checks retain the previous result and flag it as potentially stale; checks older than 24 hours are labeled stale. No published stable release is distinct from an unavailable check. Preview commits are not advertised as stable releases.

@@ -47,6 +47,8 @@ plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk
 
 An extension upload may also be available under **Extensions > My Extensions > Upload Extension**. Use the native extension installer; do not copy extension files into a public subscription home. Verify Windows ACLs independently: hosting users must not read private report/state files or modify Python/the collector. Do not replace those checks with chmod or broad Everyone permissions.
 
+The preview's read-only Windows diagnostic is `plesk bin extension.exe --exec help4-disk-usage permissions.php`. Follow the [ACL runbook](windows-acl.md) for conservative failure handling, trusted local identities and the additional runtime-dependency/native effective-access checks. It does not modify permissions or automatically gate customer requests.
+
 ## 2. Set Host Policy
 
 Open **Disk Usage Audit**, then **Scan settings** as an unimpersonated administrator. Set the absolute Python executable path. Keep it administrator-owned and outside customer-writable storage. The default Windows path is a suggestion, not proof that Python exists there.

@@ -30,6 +30,8 @@ plesk bin extension.exe --exec help4-disk-usage doctor.php
 
 This checks runtime version and descriptor/handle API availability without reading subscription files. It returns nonzero on an unavailable/incompatible runtime. It intentionally reports native panel and private-storage validation as false; inspect those separately.
 
+On Windows, `plesk bin extension.exe --exec help4-disk-usage permissions.php` adds a bounded, read-only NTFS ACL snapshot. It checks private flat storage, selected module/runtime paths and ancestors, but does not repair or continuously enforce permissions. Actual hosting-user effective access, Plesk identities and runtime dependencies remain native gates. See the [Windows ACL runbook](windows-acl.md) before using it.
+
 ## Background Rotation
 
 Installation registers one extension-scoped hourly native task. Its body is disabled until an unimpersonated administrator enables Scheduled stale-report refresh. The default interval is six hours, batch two, and each queued scan uses the same owner/plan/minimum interval/hourly/server/queue constraints as manual scans. One worker remains active at a time. The candidate-selection loop has a ten-second budget, at most 10,000 examined domains and at most twice the batch size in admission attempts. Oldest-first ordering is among examined candidates; missing reports rank first. Native inventory lookup duration and fleets exceeding this window remain explicit scale-validation gates, not a guaranteed bounded native database query or complete-fleet fairness claim.
