@@ -1,0 +1,43 @@
+# Isolated Test Lab: Measured Status
+
+Checkpoint: 2026-10-08/09. Extension code: commit `6722a397cde2deb22d55a4901fa1fc5cfc8f6d01`, preview 0.1.1 release 1. This is bounded testing, not certification.
+
+## What Was Actually Tested
+
+An official `plesk/plesk` Linux container was created locally on an Apple Silicon Mac using AMD64 emulation. Plesk reports **18.0.81.2** on **Ubuntu 24.04**. HTTP/HTTPS panel ports bind only to `127.0.0.1:9880` and `127.0.0.1:9443`. No paid VPS, public listener, production server change or host SYS_ADMIN capability was introduced.
+
+The native Plesk extension installer accepted `help4-disk-usage-0.1.1-1.zip`. SHA-256:
+
+```text
+d593ac447fb690194ec3991fd72dd681a29df67f119ccd44ade4eb345e3e74d3
+```
+
+The installed Linux collector was hash-matched to source and tested via a symlink into the test harness: 18 tests, 12 passed, six Windows-only tests skipped. The raw-byte filename/PHP JSON regression passed on Linux. Installed collector SHA-256:
+
+```text
+c5a7cd820c7cda2b7388dc699b33007f56094c8e114bfd62ce8ebcab0bac7150
+```
+
+[CI for this code](https://github.com/Help4Network/help4-disk-usage-plesk/actions/runs/37877428967) passed all five jobs: Ubuntu Python 3.10/3.13, Windows Python 3.10/3.13 and PHP 8.3. Windows jobs execute native handle/junction/race tests; they are not Linux skips. This does not establish Windows Plesk GUI/ACL behavior.
+
+## Blocking Native Panel Tests
+
+The panel requires WebPros EULA acceptance. Its bundled trial key is rejected in this Mac/emulated-container environment. The agreement was not accepted and licensing was not bypassed. A properly licensed, authorized lab is required before creating native test tenants or asserting GUI/role behavior.
+
+The installer also warns that it cannot connect to the Plesk task manager. The official task-manager process logs inability to subscribe to systemd DBus events in this container. A successful extension install does **not** establish that scans can queue/complete through Plesk. We did not invent a fake DBus service, force licensing checks or hide that warning.
+
+The synthetic PHP fixture renders the shipped templates/CSS/JS with dummy data. Desktop, settings, entry-heavy and partial-coverage images are public examples. The browser's responsive capture mechanism changed the requested viewport during capture, so the invalid mobile image was excluded. Actual native desktop/mobile shell behavior remains a release gate.
+
+## Next Native Test Environments
+
+Use a disposable **full-systemd Linux VM** and a separate **supported Windows Server VM**, with a valid free vendor developer/trial license if available and explicitly authorized EULA acceptance. Obtain current supported OS requirements from [Plesk's official documentation](https://docs.plesk.com/en-US/obsidian/).
+
+Keep management access private/loopback or on an authorized restricted network. Do not create paid resources, enroll recurring subscriptions or expose a public administrator endpoint without explicit authorization. Keep credentials and panel screenshots outside this public repository.
+
+Install administrator-owned Python, create two unrelated synthetic customers plus reseller/additional-user fixtures, and execute every item in [the native validation matrix](validation.md). In particular, test negative cross-tenant routes, queue pressure, idle behavior, native File Manager jumps, Windows private-storage ACLs, ownership transfers, upgrades and uninstall cleanup.
+
+## Security Review Status
+
+A Codex Security scan of the preceding `28e1a9d` snapshot found a Windows path-based enumeration race and invalid POSIX filename encoding that could block report serialization. The 0.1.1 code replaces Windows enumeration/child opens with handle-bound native calls and marks unsupported filename encodings as partial omissions. Native OS regression tests passed in CI.
+
+The scan is a **pre-fix report**, not independent verification of the final patch. Its coverage is marked partial; one independent architecture pass did not return, and the parent performed a sequential fallback. Final native role/ACL validation and independent post-fix review remain required. Private scan artifacts are deliberately not included in the tutorial kit.

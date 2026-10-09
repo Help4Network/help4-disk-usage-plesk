@@ -74,7 +74,9 @@ Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `p
 
 ## WHMCS And Public Review
 
-[WHMCS integration status](docs/whmcs.md), [security policy](SECURITY.md), [release gates](docs/validation.md) and [marketing rules](docs/marketing.md). A separately named Plesk adapter must not overwrite the cPanel module. Public screenshots use synthetic example.test data only; private production evidence never enters this repo.
+[Operator tutorial](docs/tutorial.md), [isolated lab results](docs/testing-lab.md), [WHMCS integration status](docs/whmcs.md), [security policy](SECURITY.md), [release gates](docs/validation.md) and [marketing kit](docs/marketing.md). A separately named Plesk adapter must not overwrite the cPanel module. Public screenshots use synthetic example.test data only; private production evidence never enters this repo.
+
+Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`). It includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest. It excludes private lab evidence, credentials and security-scan artifacts.
 
 ## Official SDK References
 
