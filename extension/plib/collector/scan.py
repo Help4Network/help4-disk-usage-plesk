@@ -129,9 +129,10 @@ class WindowsTree:
         self.parts = tail[1:].split("\\")
         self.ancestors = []
 
-    def open(self, path):
-        # READ_ATTRIBUTES only. Share read/write, but NOT delete/rename.
-        h = self.k.CreateFileW(path, 0x80, 0x3, None, 3, 0x02200000, None)
+    def open(self, path, pin_directory=False):
+        # Directory listing access participates in Windows sharing checks;
+        # attributes-only handles do not reliably prevent directory renames.
+        h = self.k.CreateFileW(path, 0x81 if pin_directory else 0x80, 0x3, None, 3, 0x02200000, None)
         if h == ctypes.c_void_p(-1).value:
             raise ctypes.WinError(ctypes.get_last_error())
         data = self.Info()
@@ -146,6 +147,13 @@ class WindowsTree:
                 "bytes": (data.size_high << 32) | data.size_low,
                 "modified": int(modified / 10000000 - 11644473600),
                 "identity": (data.volume, data.id_high, data.id_low)}
+        if info["kind"] == "directory" and not pin_directory:
+            self.k.CloseHandle(h)
+            pinned, current = self.open(path, pin_directory=True)
+            if current["kind"] != "directory" or current["identity"] != info["identity"]:
+                self.k.CloseHandle(pinned)
+                raise OSError("Directory changed while pinning")
+            return pinned, current
         return h, info
 
     def __enter__(self):
