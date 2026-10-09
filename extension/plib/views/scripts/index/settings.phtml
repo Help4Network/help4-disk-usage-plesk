@@ -8,6 +8,8 @@
     <?php endforeach ?>
     <label for="h4-overrides">Subscription limit overrides (JSON)</label>
     <textarea id="h4-overrides" name="overrides_json" rows="5"><?= $esc(json_encode($this->policy['overrides'], JSON_PRETTY_PRINT | JSON_FORCE_OBJECT)) ?></textarea>
+    <label for="h4-profiles">Service-plan profile limits (JSON)</label>
+    <textarea id="h4-profiles" name="profiles_json" rows="5"><?= $esc(json_encode($this->policy['profiles'], JSON_PRETTY_PRINT | JSON_FORCE_OBJECT)) ?></textarea>
     <button type="submit" class="h4-primary">Save settings</button>
   </form>
   <footer class="h4-byline">Built by <a href="https://help4network.com">Help4 Network</a></footer>

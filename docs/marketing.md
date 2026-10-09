@@ -10,16 +10,18 @@ Tutorial topics: lab installation, administrator Python path, bounded refresh, c
 
 ## Publishable Kit
 
-Run `python3 scripts/tutorial_bundle.py` or `py -3 scripts/tutorial_bundle.py` to create `dist/help4-disk-usage-plesk-0.1.1-tutorial-kit.zip`. The allowlisted kit contains the [operator tutorial](tutorial.md), README, license/security/validation/WHMCS-status notes, four synthetic screenshots, the installable preview ZIP and an internal SHA-256 manifest. It does not include production screenshots, private lab evidence, credentials or the private security report.
+Run `python3 scripts/tutorial_bundle.py` or `py -3 scripts/tutorial_bundle.py` to create `dist/help4-disk-usage-plesk-0.2.0-tutorial-kit.zip`. The allowlisted kit contains the [operator tutorial](tutorial.md), README, license/security/validation/WHMCS-status notes, six synthetic screenshots, the installable preview ZIP and an internal SHA-256 manifest. It does not include production screenshots, private lab evidence, credentials or the private security report.
 
 Use these captions and preserve the warning banner:
 
 | Image | Caption |
 | --- | --- |
-| `screenshots/synthetic-desktop-0.1.1.jpg` | Largest-file report rendered from the 0.1.1 extension template with dummy data. |
-| `screenshots/synthetic-entry-trees-0.1.1.jpg` | Entry-heavy trees ranked by filesystem-entry count; synthetic data. |
-| `screenshots/synthetic-settings-0.1.1.jpg` | Administrator policy controls for scan limits and subscription overrides; synthetic template. |
-| `screenshots/synthetic-partial-0.1.1.jpg` | Partial scan example: lower-bound totals, errors/omissions and no comparable growth; synthetic data. |
+| `screenshots/synthetic-desktop-0.2.0.jpg` | Largest-file report rendered from the 0.2.0 extension template with dummy data. |
+| `screenshots/synthetic-entry-trees-0.2.0.jpg` | Entry-heavy trees ranked by filesystem-entry count; synthetic data. |
+| `screenshots/synthetic-settings-0.2.0.jpg` | Administrator controls for scan limits, native plan profiles and subscription overrides; synthetic template. |
+| `screenshots/synthetic-partial-0.2.0.jpg` | Partial scan example: lower-bound totals, errors/omissions and no comparable growth; synthetic data. |
+| `screenshots/synthetic-failure-0.2.0.jpg` | Failed scan notice preserves the previous report; synthetic template. |
+| `screenshots/synthetic-updates-0.2.0.jpg` | Administrator stable-release check page with no published stable release; synthetic template, not live GitHub evidence. |
 
 These are template screenshots, **not native Plesk panel captures**. No unverified mobile screenshot is included. Do not crop away development-preview/synthetic labels or imply vendor certification.
 
@@ -27,9 +29,9 @@ These are template screenshots, **not native Plesk panel captures**. No unverifi
 
 Suggested short description: "An MIT-licensed development preview for subscription-scoped disk and filesystem-entry audits in Plesk, designed for Linux and Windows. It highlights large files, entry-heavy directories and stale archives, with bounded scan policies, exports and File Manager links."
 
-Available in source: four offender views, relative paths, last-scan/coverage status, search/sort/paging, CSV/JSON, one-worker lock, host-configurable refresh/runtime/queue limits, explicit subscription overrides, current authorization checks and a small Help4 Network footer. Native Linux package installation and native Windows/Linux collector CI pass. See [lab limits](testing-lab.md) before describing end-to-end panel operation.
+Available in source: four offender views, relative paths, last-scan/coverage/failure status, search/sort/paging, CSV/JSON, one-worker lock, host-configurable refresh/runtime/queue limits, native service-plan profiles, explicit subscription overrides, bound finite queue leases, admin-only stable-release discovery, current authorization checks and a small Help4 Network footer. The earlier 0.1.1 native Linux package installation and native Windows/Linux collector CI passed. See [lab limits](testing-lab.md) and current CI before describing end-to-end panel operation; source features are not native production certification.
 
-Not released: WHMCS Plesk adapter, automatic service-plan mappings, scheduler, release-discovery/admin upgrade UI, file deletion/editing, quota parity, production certification or measured performance superiority. A Plesk trial/license/EULA and container task-manager gate still block native role/GUI/background-scan validation. Windows Plesk ACL testing is also pending.
+Not released: WHMCS Plesk adapter, scheduler, unattended updater, file deletion/editing, quota parity, production certification or measured performance superiority. Native service-plan synchronization, release-page network/native upgrade behavior and all role/GUI/background-task gates need validation. A Plesk trial/license/EULA and container task-manager gate still block native role/GUI/background-scan validation. Windows Plesk ACL testing is also pending.
 
 ## Initial Social Publication
 

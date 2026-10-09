@@ -1,6 +1,32 @@
 # Isolated Test Lab: Measured Status
 
-Checkpoint: 2026-10-08/09. Extension code: commit `6722a397cde2deb22d55a4901fa1fc5cfc8f6d01`, preview 0.1.1 release 1. This is bounded testing, not certification.
+This records both the historical 0.1.1 checkpoint and the 2026-10-09 0.2.0 update. This is bounded testing, not certification. Current source/CI must be checked independently of the older evidence.
+
+## 0.2.0 Native Linux Package Update: 2026-10-09
+
+The same isolated container accepted `help4-disk-usage-0.2.0-1.zip` through the native Plesk installer, with the existing task-manager warning still present. The first attempt from `/tmp` was rejected because the copied package was no longer available there; retrying from a private root-owned lab directory succeeded. No new EULA was accepted, licensing bypassed, public listener added or production server changed.
+
+Installed package SHA-256:
+
+```text
+7ba97b756c7bc1761929abfe4beff283b102039257e98d76e8552bccce2af844
+```
+
+Installed `Store.php`, `Releases.php` and `PlanItems.php` match source SHA-256 values:
+
+```text
+8735ddab5961ec5f7153d9aa7054f6f0b97b339249da30746bbca665f1ad1f96  Store.php
+8dd28c7d7c5669a5e6d524a6662bd0a7402039e99757ebc94f8fe2151c6d7ca9  Releases.php
+3c3d6482ec70f4228690c723a9c7ad148e081f5b0487e16936eee8c4a7c1aa2f  PlanItems.php
+```
+
+Policy/queue, release-discovery and controller regression fixtures passed against those installed library/controller files using Plesk's own PHP 8.4.25 CLI. This uses mocked SDK/session/domain data, not authenticated live roles or outbound GitHub connectivity. The installed collector again passed 12 Linux tests; six Windows-only tests were skipped. The source Mac run passed 11 tests with seven platform/filesystem skips. Current CI separately exercises actual Windows/Linux collectors and PHP; read the workflow result for the exact pushed commit.
+
+Six public 0.2.0 screenshots render the shipped templates with synthetic data: reports, entry trees, settings/profiles, partial coverage, failed scan and update status. No native Plesk shell/tenant/ACL success is inferred from them. The 0.1.1 evidence below remains historical and its hashes were not relabeled as 0.2.0 evidence.
+
+## Historical 0.1.1 Checkpoint
+
+Extension code: commit `6722a397cde2deb22d55a4901fa1fc5cfc8f6d01`, preview 0.1.1 release 1.
 
 ## What Was Actually Tested
 

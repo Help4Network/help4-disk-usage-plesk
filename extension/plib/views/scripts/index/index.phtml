@@ -23,8 +23,11 @@ $r = $this->report;
       </form>
       <a href="<?= $esc($url('index', ['domain' => $d->getId()])) ?>">Check status</a>
     <?php endif ?>
-    <?php if ($this->admin): ?><a href="<?= $esc($url('settings')) ?>">Scan settings</a><?php endif ?>
+    <?php if ($this->admin): ?><a href="<?= $esc($url('settings')) ?>">Scan settings</a><a href="<?= $esc($url('updates')) ?>">Software updates</a><?php endif ?>
   </div>
+  <?php if ($this->scanStatus && $this->scanStatus['state'] === 'failed'): ?>
+    <p class="h4-notice" role="status">The last scan did not complete (<?= $esc($this->scanStatus['at']) ?>). Any previous report remains available. Contact your host to check the runtime, background tasks and storage permissions.</p>
+  <?php endif ?>
   <?php if (!$d): ?><p role="status">No accessible subscriptions.</p>
   <?php elseif (!$r): ?><p role="status" class="h4-notice">No report yet. <?= $this->pending ? 'A background scan is queued.' : 'Request a scan to build the first report.' ?></p>
   <?php else: ?>

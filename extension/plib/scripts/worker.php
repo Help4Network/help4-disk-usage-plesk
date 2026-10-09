@@ -16,16 +16,14 @@ if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
 try {
     $state = Modules_Help4DiskUsage_Store::read('state');
     $pending = $state['pending'][$id] ?? null;
-    if (!$pending || !hash_equals($pending['token'], $token) || $pending['time'] < time() - 600) {
+    if (!$pending || !hash_equals($pending['token'], $token) || !Modules_Help4DiskUsage_Store::alive($pending)) {
         throw new RuntimeException('Expired scan reservation');
     }
     $domain = pm_Domain::getByDomainId((int)$id);
     $actor = pm_Client::getByClientId((int)$pending['actor']);
     Modules_Help4DiskUsage_Access::authorizeQueued($actor, $domain, $pending);
+    Modules_Help4DiskUsage_Store::validateReservation($pending, $domain);
     $binding = Modules_Help4DiskUsage_Access::binding($domain);
-    if (!hash_equals($pending['binding'], $binding)) {
-        throw new RuntimeException('Subscription identity changed');
-    }
     $python = Modules_Help4DiskUsage_Store::policy()['python'];
     if (!is_file($python)) {
         throw new RuntimeException('Python runtime not configured');
@@ -74,9 +72,7 @@ try {
     }
     $current = pm_Domain::getByDomainId((int)$id);
     Modules_Help4DiskUsage_Access::authorizeQueued(pm_Client::getByClientId((int)$pending['actor']), $current, $pending);
-    if (!hash_equals($binding, Modules_Help4DiskUsage_Access::binding($current))) {
-        throw new RuntimeException('Subscription identity changed during scan');
-    }
+    Modules_Help4DiskUsage_Store::validateReservation($pending, $current);
     $previous = Modules_Help4DiskUsage_Store::report($current);
     $report['growth_bytes'] = $previous && $previous['complete'] && $report['complete']
         ? $report['bytes'] - $previous['bytes'] : null;

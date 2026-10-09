@@ -2,7 +2,7 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
-**0.1.1 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and update gates must pass before stable 1.0.0. See [validation](docs/validation.md). Automated CI is not Plesk certification.
+**0.2.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md). Automated CI is not Plesk certification.
 
 ## Features
 
@@ -11,7 +11,8 @@ Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsid
 - Last-scanned time, age, duration, errors and partial coverage; growth requires two complete scans of the same current subscription identity.
 - Search, sort, paging, relative-path copy, formula-safe CSV and JSON. Rankings retain the top 100/view; search applies to this retained ranking.
 - File -> parent / tree -> itself **Open in File Manager** links in a new authenticated Plesk tab, preserving native panel navigation.
-- Administrator-editable runtime/TTL/refresh/server queue policies with per-subscription overrides. One scanner at a time.
+- Administrator-editable runtime/TTL/refresh/server queue policies, native service-plan profiles and per-subscription overrides. One scanner at a time; expired/failed scans preserve the previous report.
+- Administrator-only stable-release discovery with bounded HTTPS checks, cooldown and last-check timestamps; reviewed native upgrades, not unattended download-and-execute.
 - Current Plesk authorization on reports, refresh, export and file jumps. Worker authorization before and after scans. Ownership/home/name/GUID changes invalidate cached reports.
 
 No deletion, rename, file-content reading, public arbitrary-root endpoint or automatic page-refresh loop. Cleanup stays in Plesk File Manager and the application. Bytes are logical file sizes, **not quota/allocated disk usage**; hard-link entries count separately. Mail/databases/backups outside the home are excluded. Windows reports filesystem entries, not POSIX inode quota. Symlinks, junctions, reparse points, cross-device trees and unsafe names are not followed.
@@ -34,6 +35,10 @@ git clone https://github.com/Help4Network/help4-disk-usage-plesk.git
 cd help4-disk-usage-plesk
 python3 -m unittest discover -s tests -v
 php tests/security.php
+php tests/policy.php
+php tests/releases.php
+php tests/controllers.php
+php tests/lint.php
 python3 scripts/package.py
 ```
 
@@ -45,13 +50,13 @@ Verify `dist/SHA256SUMS`, then upload the built ZIP through **Extensions > My Ex
 
 ```sh
 # Linux root
-plesk bin extension --install /absolute/path/help4-disk-usage-0.1.1-1.zip
+plesk bin extension --install /absolute/path/help4-disk-usage-0.2.0-1.zip
 ```
 
 ```powershell
 # Windows elevated PowerShell
-Get-FileHash 'C:\Lab\help4-disk-usage-0.1.1-1.zip' -Algorithm SHA256
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.1.1-1.zip'
+Get-FileHash 'C:\Lab\help4-disk-usage-0.2.0-1.zip' -Algorithm SHA256
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.2.0-1.zip'
 ```
 
 Open **Disk Usage Audit** from native Plesk navigation. **Scan settings** selects the real Python executable and policy. Create synthetic unrelated customers/resellers first and follow [native validation](docs/validation.md). Click **Refresh scan**, then **Check status**. The scan runs in a background task; the customer page never auto-submits or refreshes itself.
@@ -64,11 +69,15 @@ Administrator subscription overrides:
 {"123":{"hourly":6,"minimum_interval":300,"seconds":90},"456":{"hourly":0}}
 ```
 
-`hourly:0` disables customer refresh. Service-plan automatic mappings, scheduled oldest-cache rotation and release-discovery/admin update UI remain pre-1.0 gates; they are not released features.
+`hourly:0` disables customer refresh. Native service plans expose one exclusive Disk Usage Audit profile: **Host default**, **Extended**, or **Customer refresh disabled**. No selected profile uses host default. Extended defaults to 6 requests/hour and 90s runtime; administrators can edit default/extended profile limits in Scan settings. Effective limits use subscription override, then profile, then host defaults. Disabled always blocks customer/reseller refresh, even with an enabling override; administrator requests still obey global admission limits. Plan/profile changes invalidate queued work before scanning or publication. Native plan synchronization is a Linux/Windows validation gate, not yet live-certified behavior.
+
+Queue reservations expire after enough time for the configured queue to drain at the hard maximum runtime, plus a ten-minute allowance (46 minutes at the default queue size). Expired work is not silently kept queued. There is no scheduled oldest-cache rotation yet.
 
 ## Upgrade, Rollback And Uninstall
 
-Pull Git changes, review `extension/CHANGES.md`, rerun tests/build, verify checksums, and reinstall the built ZIP with the same native command. **A git pull alone is not a deployed upgrade.** Policy/cache live outside source. No automatic download-and-execute pipeline or snapshot job exists. Roll back by rebuilding/reinstalling an identified prior Git tag/commit; invalidate incompatible cache schemas and never reuse a foreign-owner report.
+The administrator **Software updates** page checks only the fixed repository's latest stable GitHub release. An explicit CSRF-protected check has a five-minute cooldown, verified TLS, no redirects, a six-second deadline and a 64 KiB metadata ceiling. It sends no subscription paths or account data. Failed checks retain the previous result and flag it as potentially stale; checks older than 24 hours are labeled stale. No published stable release is distinct from an unavailable check. Preview commits are not advertised as stable releases.
+
+Pull Git changes, review `extension/CHANGES.md`, rerun tests/build, verify checksums, and reinstall the built ZIP with the same native command. **A git pull alone is not a deployed upgrade.** Policy/cache live outside source. Finish/cancel pending tasks before upgrades; older reservations without a policy binding fail closed. No automatic download-and-execute pipeline or snapshot job exists. Roll back by rebuilding/reinstalling an identified prior Git tag/commit; invalidate incompatible cache schemas and never reuse a foreign-owner report.
 
 Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `plesk bin extension.exe --uninstall help4-disk-usage`. Finish/cancel queued scans first; native uninstall task/data handling must pass both OS gates before stable release.
 
@@ -85,6 +94,7 @@ Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` 
 - [Domain/home API](https://plesk.github.io/pm-api-stubs/docs/classes/pm-Domain.html)
 - [Session/impersonation API](https://plesk.github.io/pm-api-stubs/docs/classes/pm-Session.html)
 - [Current domain access checks](https://plesk.github.io/pm-api-stubs/docs/classes/pm-Client.html)
+- [Native service-plan integration](https://docs.plesk.com/en-US/obsidian/extensions-guide/plesk-features-available-for-extensions/implement-ui/integrate-to-plesk-ui/integrate-with-plesk-service-plans.77217/)
 - [Native Windows/Linux extension CLI](https://docs.plesk.com/en-US/obsidian/extensions-guide/extensions-management-utility.73617/)
 - [Official local Plesk test server](https://github.com/plesk/docker)
 

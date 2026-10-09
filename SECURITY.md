@@ -9,6 +9,8 @@ Development preview: no shared-production release until docs/validation.md passe
 - Roots come from Plesk, never HTTP path parameters. Customers cannot configure executables. Collector processes use an argument array, not a shell string.
 - Linux pins descriptors with O_NOFOLLOW and verifies device/inode. Windows rejects reparse points, pins ancestors without FILE_SHARE_DELETE and refuses UNC/device/ADS roots.
 - One active scanner, bounded queue, actor/subscription hourly and interval limits, hard runtime/entry/directory/depth/output limits. Growth requires complete snapshots.
+- Native plan profiles fail closed on lookup/conflict; disabled customer refresh cannot be re-enabled by an override. Reservations bind effective policy, have finite queue-drain leases, and cannot clear another identity's newer token.
+- Stable-release discovery is unimpersonated-admin-only, CSRF-protected and rate-limited. Fixed verified HTTPS endpoint, no redirects, bounded response/deadline, strict version metadata and reconstructed repository links. No remote binaries/content are executed; failed checks keep a labeled stale result.
 - Escaped HTML, formula-safe CSV, no-store exports, retained-member file jumps. Relative paths and metadata only, never file contents.
 - Private storage and runtime/source paths must be administrator-owned. Windows ACLs are an explicit gate; chmod alone is not Windows protection.
 

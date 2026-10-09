@@ -36,6 +36,7 @@ class IndexController extends pm_Controller_Action
         $this->view->admin = Modules_Help4DiskUsage_Access::admin();
         $this->view->report = null;
         $this->view->domain = null;
+        $this->view->scanStatus = null;
         $this->view->notice = $this->getParam('queued') === '1' ? 'Scan queued. Your previous report remains available.' : '';
         if (!$domains) {
             return;
@@ -46,7 +47,8 @@ class IndexController extends pm_Controller_Action
         $this->view->report = $report;
         $policy = Modules_Help4DiskUsage_Store::effective($domain);
         $this->view->ttl = $policy['ttl'];
-        $this->view->pending = isset(Modules_Help4DiskUsage_Store::read('state')['pending'][$domain->getId()]);
+        $this->view->pending = Modules_Help4DiskUsage_Store::pending($domain);
+        $this->view->scanStatus = Modules_Help4DiskUsage_Store::status($domain);
         $this->view->search = substr((string)$this->getParam('search', ''), 0, 128);
         $this->view->sort = (string)$this->getParam('sort', $this->getParam('section') === 'entry_trees' ? 'entries' : 'bytes');
         $this->view->result = Modules_Help4DiskUsage_Report::rows($report ?? [], $this->getParam('section', 'largest_files'),
@@ -129,6 +131,7 @@ class IndexController extends pm_Controller_Action
             try {
                 $data = $this->getRequest()->getPost();
                 $data['overrides'] = json_decode($data['overrides_json'] ?? '{}', true, 16, JSON_THROW_ON_ERROR);
+                $data['profiles'] = json_decode($data['profiles_json'] ?? '{}', true, 16, JSON_THROW_ON_ERROR);
                 $policy = Modules_Help4DiskUsage_Store::validatePolicy($data);
                 Modules_Help4DiskUsage_Store::locked(function () use ($policy) {
                     Modules_Help4DiskUsage_Store::write('policy', $policy);
@@ -139,5 +142,24 @@ class IndexController extends pm_Controller_Action
                 $this->_status->addMessage('warning', 'Settings not saved. Check the limits, Python path and subscription overrides.');
             }
         }
+    }
+
+    public function updatesAction()
+    {
+        if (!Modules_Help4DiskUsage_Access::admin()) {
+            throw new RuntimeException('Administrator access required');
+        }
+        $this->view->installedVersion = pm_Extension::getById('help4-disk-usage')->getVersion();
+        if ($this->getRequest()->isPost()) {
+            $this->post();
+            try {
+                Modules_Help4DiskUsage_Releases::check();
+                $this->_status->addMessage('info', 'Stable release check completed');
+            } catch (RuntimeException $e) {
+                $this->_status->addMessage('warning', $e->getMessage());
+            }
+            $this->_redirect(pm_Context::getActionUrl('index', 'updates'), ['code' => 303]);
+        }
+        $this->view->release = Modules_Help4DiskUsage_Releases::cached();
     }
 }

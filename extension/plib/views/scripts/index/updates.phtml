@@ -1,0 +1,29 @@
+<?php
+$esc = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); };
+$cache = $this->release;
+$result = $cache['result'] ?? [];
+$tag = $result['tag'] ?? '';
+$valid = is_string($tag) && preg_match('/^v?[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}$/D', $tag);
+?>
+<div class="h4-audit">
+  <p><a href="<?= $esc(pm_Context::getActionUrl('index', 'index')) ?>">Back to reports</a></p>
+  <dl class="h4-totals">
+    <div><dt>Installed version</dt><dd><?= $esc($this->installedVersion) ?></dd></div>
+    <div><dt>Latest stable release</dt><dd><?= $valid ? $esc(ltrim($tag, 'v')) : 'Not available' ?></dd></div>
+  </dl>
+  <?php if (isset($cache['checked_at'])): ?>
+    <p class="h4-status">Last successful check <time><?= $esc($cache['checked_at']) ?></time><?= time() - strtotime($cache['checked_at']) > 86400 ? ' · Stale result' : '' ?></p>
+  <?php endif ?>
+  <?php if (isset($cache['failed_at'])): ?><p class="h4-notice" role="status">The last check failed. Any previous result may be stale.</p><?php endif ?>
+  <?php if ($valid): ?>
+    <p role="status"><?= version_compare(ltrim($tag, 'v'), $this->installedVersion, '>') ? 'A newer stable release is available.' : 'The installed version is at or above the latest stable release.' ?></p>
+    <p><a target="_blank" rel="noopener noreferrer" href="<?= $esc(Modules_Help4DiskUsage_Releases::REPOSITORY . '/releases/tag/' . rawurlencode($tag)) ?>">Review stable release</a></p>
+  <?php elseif (($result['state'] ?? '') === 'no_release'): ?><p role="status">No published stable release was found.</p>
+  <?php else: ?><p role="status">Stable release status has not been established.</p><?php endif ?>
+  <form method="post" action="<?= $esc(pm_Context::getActionUrl('index', 'updates')) ?>">
+    <input type="hidden" name="csrf" value="<?= $esc($this->csrf) ?>">
+    <button type="submit" class="h4-primary">Check stable release</button>
+  </form>
+  <p><a target="_blank" rel="noopener noreferrer" href="https://github.com/Help4Network/help4-disk-usage-plesk#upgrade-rollback-and-uninstall">Upgrade instructions</a></p>
+  <footer class="h4-byline">Built by <a href="https://help4network.com">Help4 Network</a></footer>
+</div>

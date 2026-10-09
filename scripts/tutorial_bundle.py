@@ -17,7 +17,7 @@ def build():
     paths = [ROOT / "README.md", ROOT / "LICENSE", ROOT / "SECURITY.md"]
     paths += sorted((ROOT / "docs").glob("*.md"))
     expected = [f"synthetic-{name}-{version}.jpg" for name in
-                ("desktop", "entry-trees", "settings", "partial")]
+                ("desktop", "entry-trees", "settings", "partial", "failure", "updates")]
     paths += [ROOT / "docs/screenshots" / name for name in expected]
     paths += [package, ROOT / "dist/SHA256SUMS"]
     for path in paths:

@@ -1,10 +1,10 @@
 # Validation And 1.0 Release Gates
 
-0.1.1 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
+0.2.0 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
 
 ## Automated
 
-Linux: no-follow, replaced-directory identity, hidden/Unicode names, raw-byte filename partial report (including PHP decoding when installed), sparse logical bytes, stale age, entry/directory bounds, no absolute-path output. Windows: actual Win32 handles, handle-bound enumeration, junction rejection, post-check FSCTL reparse mutation, pre-opened writer rejection, pinned-ancestor rename denial, UNC/device/ADS/root rejection. Windows tests must run on Windows, not just skip on Linux. PHP: access denial, originating admin decision and fresh role recheck, traversal rejection, cached membership, correct parent jump, export stripping and formula neutralization.
+Linux: no-follow, replaced-directory identity, hidden/Unicode names, raw-byte filename partial report (including PHP decoding when installed), sparse logical bytes, stale age, entry/directory bounds, no absolute-path output. Windows: actual Win32 handles, handle-bound enumeration, junction rejection, post-check FSCTL reparse mutation, pre-opened writer rejection, pinned-ancestor rename denial, UNC/device/ADS/root rejection. Windows tests must run on Windows, not just skip on Linux. PHP: access denial, originating admin decision and fresh role recheck, traversal rejection, cached membership, correct parent jump, export stripping and formula neutralization; service-plan precedence/hard bounds, actor/subscription/server admission, queue lease/expiry, policy changes, transfer/token isolation and failure retention; release metadata validation, admin/impersonation isolation, cooldown and failed-check cache preservation. PHP tests run on both OSes; fixture success is not native SDK proof.
 
 ## Native Matrix: Both Linux And Windows
 
@@ -20,7 +20,11 @@ Create two unrelated customers, owned reseller subscriptions, an unrelated resel
 8. Ownership/home change or delete/recreate invalidates cache/export/jumps immediately; queued workers abort.
 9. Desktop and actual 390px mobile rendering, no overlap/console errors, deliberate table scrolling, stable shell.
 10. Versioned upgrade/downgrade, cache compatibility and native uninstall with pending tasks leave no exposed worker/data.
+11. Native service-plan selection/synchronization: default/extended/disabled, explicit overrides, conflict/lookup failure and policy change while queued. Disabled blocks customers/resellers; admins still obey server caps.
+12. Admin-only update page, no automatic outbound GET requests, valid/invalid CSRF, five-minute cooldown including failures, TLS/timeout/response bound, no-release versus unavailable, prior-result stale warning and native reviewed install/rollback.
 
 ## Remaining 1.0 Gates
 
-Native Windows/Linux panel QA, Windows ACL installer verification, service-plan mappings, scheduled oldest-cache rotation, release-discovery/admin upgrade UI, native WHMCS connection/deployment/freshness, independent security review and version-matched tutorials. Pending features must not be advertised as available.
+Implemented in source with fixture tests: native service-plan hook/policy mapping, queue expiry/failure/identity protections and administrator release-discovery UI. Native role/synchronization/network/upgrade validation remains required.
+
+Still open: native Windows/Linux panel QA, Windows ACL installer verification, scheduled oldest-cache rotation, native WHMCS connection/deployment/freshness, independent post-fix security review and final version-matched native tutorials. No unattended installer is included. Pending features must not be advertised as available.

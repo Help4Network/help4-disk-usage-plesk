@@ -1,4 +1,4 @@
-# Operator Tutorial: 0.1.1 Development Preview
+# Operator Tutorial: 0.2.0 Development Preview
 
 This tutorial is for an isolated Plesk lab, not a shared production server. The screenshots render the real extension templates with dummy `demo.example.test` data. They do not prove native Plesk role isolation, background tasks or File Manager behavior. See [release gates](validation.md) before a production rollout.
 
@@ -12,10 +12,14 @@ git clone https://github.com/Help4Network/help4-disk-usage-plesk.git
 cd help4-disk-usage-plesk
 python3 -m unittest discover -s tests -v
 php tests/security.php
+php tests/policy.php
+php tests/releases.php
+php tests/controllers.php
+php tests/lint.php
 python3 scripts/package.py
 (cd dist && sha256sum -c SHA256SUMS)
 # Run the native installer as root, using the actual absolute path.
-plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.1.1-1.zip
+plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.2.0-1.zip
 ```
 
 ```powershell
@@ -24,11 +28,15 @@ git clone https://github.com/Help4Network/help4-disk-usage-plesk.git
 Set-Location help4-disk-usage-plesk
 py -3 -m unittest discover -s tests -v
 php tests/security.php
+php tests/policy.php
+php tests/releases.php
+php tests/controllers.php
+php tests/lint.php
 py -3 scripts/package.py
 Get-Content .\dist\SHA256SUMS
-Get-FileHash .\dist\help4-disk-usage-0.1.1-1.zip -Algorithm SHA256
+Get-FileHash .\dist\help4-disk-usage-0.2.0-1.zip -Algorithm SHA256
 # Compare the digest, then use the actual absolute path.
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.1.1-1.zip'
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.2.0-1.zip'
 ```
 
 An extension upload may also be available under **Extensions > My Extensions > Upload Extension**. Use the native extension installer; do not copy extension files into a public subscription home. Verify Windows ACLs independently: hosting users must not read private report/state files or modify Python/the collector. Do not replace those checks with chmod or broad Everyone permissions.
@@ -45,9 +53,17 @@ Subscription overrides use numeric Plesk domain IDs, not hostnames or account na
 {"123":{"hourly":6,"minimum_interval":300,"seconds":90},"456":{"hourly":0}}
 ```
 
-`hourly:0` disables customer refresh for that subscription. These are explicit overrides; automatic service-plan mapping is not implemented. The report title is configurable. The small Help4 Network footer remains.
+`hourly:0` disables customer refresh for that subscription. Native Plesk service plans expose an exclusive Disk Usage Audit profile: **Host default**, **Extended**, or **Customer refresh disabled**. With no selected profile, host defaults apply. Extended starts at 6/hour and 90s runtime. Edit default/extended profile limits in Scan settings using:
 
-![Synthetic administrator settings](screenshots/synthetic-settings-0.1.1.jpg)
+```json
+{"audit_default":{},"audit_extended":{"hourly":6,"seconds":90}}
+```
+
+Subscription overrides take precedence over profile values, then host defaults. The disabled profile always blocks customer/reseller refresh, even with an enabling override. Administrators remain subject to global queue/hourly caps. Conflicting or unavailable plan data fails closed. Native plan synchronization and role behavior must still pass the lab matrix; fixture tests do not establish SDK behavior.
+
+The report title is configurable. The small Help4 Network footer remains.
+
+![Synthetic administrator settings](screenshots/synthetic-settings-0.2.0.jpg)
 
 ## 3. Request A Report
 
@@ -55,9 +71,13 @@ Select an authorized subscription and click **Refresh scan** once. The request q
 
 If background tasks are unavailable, fix the native task-manager environment. Do not hammer Refresh or run customer-supplied commands. Admission limits and the single-worker lock are intentional shared-server protections.
 
+The queued reservation allows the finite queue to drain at the hard maximum runtime plus a ten-minute allowance. At the default queue size it expires after 46 minutes. **A failed/expired scan** shows a failure notice without erasing the last good report. Ownership, home or relevant plan-policy changes invalidate queued work; an old worker cannot clear a newer reservation. These protections do not make an unavailable native task manager work.
+
+![Synthetic failed scan retaining its previous report](screenshots/synthetic-failure-0.2.0.jpg)
+
 Read the last-scanned timestamp and coverage before acting. **Stale** means the report exceeds the configured TTL, not that an automatic rescan has happened. **Partial coverage** means totals are lower bounds; read-error/omitted-entry counts explain incomplete inspection. Growth is unavailable for partial scans or changed subscription identity.
 
-![Synthetic partial report](screenshots/synthetic-partial-0.1.1.jpg)
+![Synthetic partial report](screenshots/synthetic-partial-0.2.0.jpg)
 
 ## 4. Find Actionable Offenders
 
@@ -68,9 +88,9 @@ Read the last-scanned timestamp and coverage before acting. **Stale** means the 
 
 Search, sort and paging apply to the retained ranking, not every file in the subscription. The default retains 100 rows per view; the hard maximum is 200. Category hints are heuristics, not instructions to delete a directory.
 
-![Synthetic largest-file report](screenshots/synthetic-desktop-0.1.1.jpg)
+![Synthetic largest-file report](screenshots/synthetic-desktop-0.2.0.jpg)
 
-![Synthetic entry-heavy report](screenshots/synthetic-entry-trees-0.1.1.jpg)
+![Synthetic entry-heavy report](screenshots/synthetic-entry-trees-0.2.0.jpg)
 
 ## 5. Review In File Manager
 
@@ -88,7 +108,13 @@ Bytes are logical file lengths, not allocated blocks, quota usage or billing tot
 
 ## 7. Upgrade Or Remove
 
-Record the deployed commit/version. Pull source, review `extension/CHANGES.md`, run tests, rebuild, verify the new checksum, then use the same native install command with the newly generated versioned ZIP. A Git pull alone does not upgrade Plesk. Policy and reports live outside the source checkout. Release discovery/admin upgrade UI is planned, not available in this preview.
+As an unimpersonated administrator, open **Software updates** and click **Check stable release**. The check contacts only the fixed public GitHub repository over verified HTTPS. It has a five-minute cooldown, six-second deadline and 64 KiB metadata limit. Customer/reseller/impersonated views cannot request it. Loading the page alone does not make an outbound request.
+
+No stable release found is different from a failed/unavailable check. A failure preserves the previous successful result with a warning; successful results older than 24 hours are labeled stale. The synthetic screenshot shows **no published stable release**; it is not evidence of a 1.0 release or live GitHub connectivity.
+
+![Synthetic administrator update page](screenshots/synthetic-updates-0.2.0.jpg)
+
+Review the fixed-repository release link and changelog. Record the deployed commit/version, finish or cancel pending tasks, pull source, run tests, rebuild, verify the checksum, then use the same native install command with the newly generated versioned ZIP. A Git pull alone does not upgrade Plesk. Policy and reports live outside the source checkout. Older reservations without a policy binding fail closed after this upgrade. There is no unattended download/execute/install pipeline.
 
 For rollback, build and install an identified prior commit in a separate source checkout; review schema compatibility first. Do not restore an old owner's report into a current subscription. No automatic snapshot job is included.
 
