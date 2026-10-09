@@ -91,7 +91,7 @@ Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `p
 
 [Operator tutorial](docs/tutorial.md), [isolated lab results](docs/testing-lab.md), [WHMCS integration status](docs/whmcs.md), [security policy](SECURITY.md), [release gates](docs/validation.md) and [marketing kit](docs/marketing.md). A separately named Plesk adapter must not overwrite the cPanel module. Public screenshots use synthetic example.test data only; private production evidence never enters this repo.
 
-Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`) **only after fresh version-matched screenshots exist**. The builder fails closed on missing captures. Existing 0.2.0 screenshots/kits are historical preview material, not 0.3.0 evidence. It includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest, excluding private lab evidence, credentials and security-scan artifacts.
+Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`). Six fresh 0.3.0 actual-template synthetic captures are included with captions and alt text in the marketing guide; the builder fails closed on missing version-matched captures. Existing 0.2.0 screenshots/kits remain historical preview material. The kit includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest, excluding private lab evidence, credentials and security-scan artifacts. It is not the stable 1.0.0 launch package.
 
 ## Official SDK References
 

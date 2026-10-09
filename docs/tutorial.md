@@ -1,4 +1,4 @@
-# Operator Tutorial: 0.2.0 Development Preview
+# Operator Tutorial: 0.3.0 Development Preview
 
 This tutorial is for an isolated Plesk lab, not a shared production server. The screenshots render the real extension templates with dummy `demo.example.test` data. They do not prove native Plesk role isolation, background tasks or File Manager behavior. See [release gates](validation.md) before a production rollout.
 
@@ -15,11 +15,13 @@ php tests/security.php
 php tests/policy.php
 php tests/releases.php
 php tests/controllers.php
+php tests/scheduler.php
+php tests/runtime.php
 php tests/lint.php
 python3 scripts/package.py
 (cd dist && sha256sum -c SHA256SUMS)
 # Run the native installer as root, using the actual absolute path.
-plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.2.0-1.zip
+plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.3.0-1.zip
 ```
 
 ```powershell
@@ -31,12 +33,14 @@ php tests/security.php
 php tests/policy.php
 php tests/releases.php
 php tests/controllers.php
+php tests/scheduler.php
+php tests/runtime.php
 php tests/lint.php
 py -3 scripts/package.py
 Get-Content .\dist\SHA256SUMS
-Get-FileHash .\dist\help4-disk-usage-0.2.0-1.zip -Algorithm SHA256
+Get-FileHash .\dist\help4-disk-usage-0.3.0-1.zip -Algorithm SHA256
 # Compare the digest, then use the actual absolute path.
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.2.0-1.zip'
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.3.0-1.zip'
 ```
 
 An extension upload may also be available under **Extensions > My Extensions > Upload Extension**. Use the native extension installer; do not copy extension files into a public subscription home. Verify Windows ACLs independently: hosting users must not read private report/state files or modify Python/the collector. Do not replace those checks with chmod or broad Everyone permissions.
@@ -63,7 +67,23 @@ Subscription overrides take precedence over profile values, then host defaults. 
 
 The report title is configurable. The small Help4 Network footer remains.
 
-![Synthetic administrator settings](screenshots/synthetic-settings-0.2.0.jpg)
+Run the content-free runtime diagnostic after selecting the real Python path:
+
+```sh
+plesk bin extension --exec help4-disk-usage doctor.php
+```
+
+```powershell
+plesk bin extension.exe --exec help4-disk-usage doctor.php
+```
+
+A successful runtime check proves Python/API availability only, not private storage ACLs or native roles. The diagnostic has a five-second subprocess deadline and 16 KiB response limit. It fails closed; fix the environment rather than widening safety limits to conceal a failure.
+
+Installation registers one hourly native rotation task; actual scans are **disabled by default**. To opt in, enable **Scheduled stale-report refresh** in Scan settings. Default batch: two missing/stale reports every six hours. Editable range: one to four per tick, one to 24 hours between eligible ticks. Scheduled scans obey the owner, plan, subscription and server limits; disabled plans stay disabled. Disabling scheduled refresh invalidates scheduled reservations. The scheduler does not bypass the single-scanner lock or make the browser auto-refresh.
+
+For a controlled opt-in lab tick, use the native extension CLI with `rotate.php` instead of `doctor.php`. Repeated ticks obey cooldown. The candidate loop is bounded to 10 seconds and 10,000 examined domains, but native inventory lookup duration and fairness across larger fleets remain scale gates; do not interpret this as a certified full-fleet runtime bound. See [platform limits](platform-support.md).
+
+![Synthetic administrator settings with scan limits and disabled scheduled refresh](screenshots/synthetic-settings-0.3.0.jpg)
 
 ## 3. Request A Report
 
@@ -73,11 +93,11 @@ If background tasks are unavailable, fix the native task-manager environment. Do
 
 The queued reservation allows the finite queue to drain at the hard maximum runtime plus a ten-minute allowance. At the default queue size it expires after 46 minutes. **A failed/expired scan** shows a failure notice without erasing the last good report. Ownership, home or relevant plan-policy changes invalidate queued work; an old worker cannot clear a newer reservation. These protections do not make an unavailable native task manager work.
 
-![Synthetic failed scan retaining its previous report](screenshots/synthetic-failure-0.2.0.jpg)
+![Synthetic failed scan retaining its previous report](screenshots/synthetic-failure-0.3.0.jpg)
 
 Read the last-scanned timestamp and coverage before acting. **Stale** means the report exceeds the configured TTL, not that an automatic rescan has happened. **Partial coverage** means totals are lower bounds; read-error/omitted-entry counts explain incomplete inspection. Growth is unavailable for partial scans or changed subscription identity.
 
-![Synthetic partial report](screenshots/synthetic-partial-0.2.0.jpg)
+![Synthetic partial report with lower-bound totals and unavailable growth](screenshots/synthetic-partial-0.3.0.jpg)
 
 ## 4. Find Actionable Offenders
 
@@ -88,9 +108,9 @@ Read the last-scanned timestamp and coverage before acting. **Stale** means the 
 
 Search, sort and paging apply to the retained ranking, not every file in the subscription. The default retains 100 rows per view; the hard maximum is 200. Category hints are heuristics, not instructions to delete a directory.
 
-![Synthetic largest-file report](screenshots/synthetic-desktop-0.2.0.jpg)
+![Synthetic largest-file report with relative paths and File Manager links](screenshots/synthetic-desktop-0.3.0.jpg)
 
-![Synthetic entry-heavy report](screenshots/synthetic-entry-trees-0.2.0.jpg)
+![Synthetic entry-heavy report ranked by filesystem entry count](screenshots/synthetic-entry-trees-0.3.0.jpg)
 
 ## 5. Review In File Manager
 
@@ -112,13 +132,13 @@ As an unimpersonated administrator, open **Software updates** and click **Check 
 
 No stable release found is different from a failed/unavailable check. A failure preserves the previous successful result with a warning; successful results older than 24 hours are labeled stale. The synthetic screenshot shows **no published stable release**; it is not evidence of a 1.0 release or live GitHub connectivity.
 
-![Synthetic administrator update page](screenshots/synthetic-updates-0.2.0.jpg)
+![Synthetic administrator update page showing preview 0.3.0 and no available stable release](screenshots/synthetic-updates-0.3.0.jpg)
 
 Review the fixed-repository release link and changelog. Record the deployed commit/version, finish or cancel pending tasks, pull source, run tests, rebuild, verify the checksum, then use the same native install command with the newly generated versioned ZIP. A Git pull alone does not upgrade Plesk. Policy and reports live outside the source checkout. Older reservations without a policy binding fail closed after this upgrade. There is no unattended download/execute/install pipeline.
 
 For rollback, build and install an identified prior commit in a separate source checkout; review schema compatibility first. Do not restore an old owner's report into a current subscription. No automatic snapshot job is included.
 
-Finish or cancel queued scans before native uninstall:
+Disable scheduled refresh and finish or cancel queued scans before native uninstall. The pre-uninstall hook refuses a pending or active scan and removes only this extension's rotator. Native task/data cleanup and rollback still require Linux/Windows verification:
 
 ```sh
 plesk bin extension --uninstall help4-disk-usage
