@@ -6,7 +6,7 @@ function Test-H4SecurityDescriptor {
     param($Descriptor, [string[]]$Trusted, [ValidateSet('private', 'protected', 'ancestor')][string]$Role)
     if ($null -eq $Descriptor.Owner -or $Descriptor.Owner.Value -notin $Trusted) { throw 'untrusted_owner' }
     if ($null -eq $Descriptor.DiscretionaryAcl -or
-        -not ($Descriptor.ControlFlags -band [Security.AccessControl.ControlFlags]::DiscretionaryAclPresent)) {
+        (([int]$Descriptor.ControlFlags -band [int][Security.AccessControl.ControlFlags]::DiscretionaryAclPresent) -eq 0)) {
         throw 'null_dacl'
     }
     foreach ($ace in $Descriptor.DiscretionaryAcl) {
@@ -18,7 +18,8 @@ function Test-H4SecurityDescriptor {
         $mask = [BitConverter]::ToUInt32([BitConverter]::GetBytes([int]$ace.AccessMask), 0)
         if ($Role -eq 'private' -and $mask -ne 0) { throw 'foreign_private_access' }
         # Inspect inherit-only grants on protected trees too; new files inherit them.
-        if ($Role -eq 'ancestor' -and ($ace.AceFlags -band [Security.AccessControl.AceFlags]::InheritOnly)) { continue }
+        if ($Role -eq 'ancestor' -and
+            (([int]$ace.AceFlags -band [int][Security.AccessControl.AceFlags]::InheritOnly) -ne 0)) { continue }
         $writeMask = [uint32]0x500D0156
         if ($Role -eq 'ancestor') { $writeMask = [uint32]0x500D0152 }
         if ($mask -band $writeMask) { throw 'foreign_write_access' }
@@ -34,9 +35,10 @@ function Assert-H4Budget {
 function Get-H4LocalPath {
     param([string]$Path)
     if ($Path.Length -gt 4096 -or $Path -notmatch '^[A-Za-z]:[\\/]' -or
-        $Path.Substring(2).Contains(':') -or $Path -match '[\x00-\x1f]') { throw 'unsafe_path' }
+        $Path.Substring(2).Contains(':') -or $Path -match '[\x00-\x1f<>"|?*]') { throw 'unsafe_path' }
     $parts = @($Path.Substring(3).TrimEnd([char[]]'\/') -split '[\\/]')
-    if ($parts.Count -eq 0 -or @($parts | Where-Object { $_ -in @('', '.', '..') -or $_ -match '[. ]$' }).Count) {
+    if ($parts.Count -eq 0 -or @($parts | Where-Object { $_ -in @('', '.', '..') -or $_ -match '[. ]$' -or
+        $_ -match '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)' }).Count) {
         throw 'unsafe_path'
     }
     return [IO.Path]::GetFullPath($Path).TrimEnd([char[]]'\')
@@ -50,7 +52,7 @@ function Assert-H4Object {
     [void]$State.Seen.Add($key)
     $State.Objects++
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
-    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'reparse_path' }
+    if (([int]$item.Attributes -band [int][IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'reparse_path' }
     $acl = Get-Acl -LiteralPath $Path -ErrorAction Stop
     $raw = [Security.AccessControl.RawSecurityDescriptor]::new($acl.GetSecurityDescriptorBinaryForm(), 0)
     Test-H4SecurityDescriptor $raw $Trusted $Role

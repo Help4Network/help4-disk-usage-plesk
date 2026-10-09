@@ -46,7 +46,8 @@ Check $true 'Available budget'
 Fails { & $module { Assert-H4Budget @{ Clock = @{ Elapsed = @{ TotalSeconds = 1 } }; Seconds = 1; Objects = 0; Maximum = 1 } } } 'time_limit'
 Fails { & $module { Assert-H4Budget @{ Clock = @{ Elapsed = @{ TotalSeconds = 0 } }; Seconds = 1; Objects = 1; Maximum = 1 } } } 'object_limit'
 foreach ($path in @('C:\', '\\server\share\private', '\\?\C:\private', 'C:\private:stream', 'C:\..\private',
-    'C:\private.\x', 'C:\private \x', 'C:\private\\x', 'relative', ('C:\x' + [char]10))) {
+    'C:\private.\x', 'C:\private \x', 'C:\private\\x', 'C:\NUL', 'C:\com1.txt', 'C:\x?y',
+    'relative', ('C:\x' + [char]10))) {
     Fails { & $module { param($p) Get-H4LocalPath $p } $path } 'unsafe_path'
 }
 
@@ -124,3 +125,4 @@ try {
     if ([IO.Directory]::Exists($base)) { Remove-Item -LiteralPath $base -Recurse -Force }
 }
 Write-Output ("Windows ACL policy and native NTFS preflight: {0} checks passed" -f $script:checks)
+exit 0
