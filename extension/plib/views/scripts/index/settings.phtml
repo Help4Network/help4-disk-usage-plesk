@@ -6,6 +6,12 @@
     <?php foreach (['title' => 'Report title', 'python' => 'Python executable', 'hourly' => 'Customer refreshes per hour', 'minimum_interval' => 'Minimum refresh interval (seconds)', 'seconds' => 'Scan runtime (seconds)', 'ttl' => 'Report freshness TTL (seconds)', 'global_hourly' => 'Server scan requests per hour', 'queue_limit' => 'Maximum queued subscriptions'] as $key => $label): ?>
       <label for="h4-<?= $key ?>"><?= $label ?></label><input id="h4-<?= $key ?>" name="<?= $key ?>" type="<?= in_array($key, ['title', 'python']) ? 'text' : 'number' ?>" value="<?= $esc($this->policy[$key]) ?>" required>
     <?php endforeach ?>
+    <label for="h4-scheduled">Scheduled stale-report refresh</label>
+    <input id="h4-scheduled" name="scheduled_enabled" type="checkbox" value="1" <?= $this->policy['scheduled_enabled'] ? 'checked' : '' ?>>
+    <label for="h4-batch">Subscriptions per scheduled run</label>
+    <input id="h4-batch" name="scheduled_batch" type="number" min="1" max="4" value="<?= $esc($this->policy['scheduled_batch']) ?>" required>
+    <label for="h4-rotation-interval">Scheduled refresh interval (seconds)</label>
+    <input id="h4-rotation-interval" name="scheduled_interval" type="number" min="3600" max="86400" value="<?= $esc($this->policy['scheduled_interval']) ?>" required>
     <label for="h4-overrides">Subscription limit overrides (JSON)</label>
     <textarea id="h4-overrides" name="overrides_json" rows="5"><?= $esc(json_encode($this->policy['overrides'], JSON_PRETTY_PRINT | JSON_FORCE_OBJECT)) ?></textarea>
     <label for="h4-profiles">Service-plan profile limits (JSON)</label>

@@ -1,6 +1,6 @@
 # Validation And 1.0 Release Gates
 
-0.2.0 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
+0.3.0 is a development preview. Record environment/date for each check. CI is not live Plesk proof.
 
 ## Automated
 
@@ -27,4 +27,6 @@ Create two unrelated customers, owned reseller subscriptions, an unrelated resel
 
 Implemented in source with fixture tests: native service-plan hook/policy mapping, queue expiry/failure/identity protections and administrator release-discovery UI. Native role/synchronization/network/upgrade validation remains required.
 
-Still open: native Windows/Linux panel QA, Windows ACL installer verification, scheduled oldest-cache rotation, native WHMCS connection/deployment/freshness, independent post-fix security review and final version-matched native tutorials. No unattended installer is included. Pending features must not be advertised as available.
+Scheduled stale-cache rotation is now implemented in source and fixture-tested, opt-in and subject to existing caps. Native scheduler registration, execution, idempotent upgrade/removal, active-worker uninstall guards and large-fleet inventory-query bounds still need native verification. No unattended installer is included.
+
+Still open: native Windows/Linux panel QA, Windows ACL installer verification, native WHMCS connection/deployment/freshness, independent post-fix security review and final version-matched native tutorials. Pending features must not be advertised as available. See [platform matrix](platform-support.md).

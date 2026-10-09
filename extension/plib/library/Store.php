@@ -83,7 +83,8 @@ class Modules_Help4DiskUsage_Store
             'seconds' => 60, 'ttl' => 3600, 'global_hourly' => 60, 'queue_limit' => 16,
             'title' => 'Disk Usage Audit', 'python' => PHP_OS_FAMILY === 'Windows'
                 ? 'C:\\Program Files\\Python313\\python.exe' : '/usr/bin/python3', 'overrides' => [],
-            'profiles' => ['audit_default' => [], 'audit_extended' => ['hourly' => 6, 'seconds' => 90]]];
+            'profiles' => ['audit_default' => [], 'audit_extended' => ['hourly' => 6, 'seconds' => 90]],
+            'scheduled_enabled' => false, 'scheduled_batch' => 2, 'scheduled_interval' => 21600];
     }
 
     public static function validatePolicy(array $data)
@@ -129,7 +130,20 @@ class Modules_Help4DiskUsage_Store
         }
         unset($profile);
         $data['profiles'] = $profiles;
-        return array_intersect_key($data, array_flip(array_merge(array_keys($limits), ['python', 'title', 'overrides', 'profiles'])));
+        foreach (['scheduled_batch' => [1, 4], 'scheduled_interval' => [3600, 86400]] as $key => $bounds) {
+            $value = $data[$key] ?? self::policy()[$key];
+            if (filter_var($value, FILTER_VALIDATE_INT) === false || $value < $bounds[0] || $value > $bounds[1]) {
+                throw new RuntimeException('Invalid scheduled refresh policy');
+            }
+            $data[$key] = (int)$value;
+        }
+        $enabled = $data['scheduled_enabled'] ?? false;
+        if (!in_array($enabled, [true, false, 0, 1, '0', '1'], true)) {
+            throw new RuntimeException('Invalid scheduled refresh switch');
+        }
+        $data['scheduled_enabled'] = in_array($enabled, [true, 1, '1'], true);
+        return array_intersect_key($data, array_flip(array_merge(array_keys($limits),
+            ['python', 'title', 'overrides', 'profiles', 'scheduled_enabled', 'scheduled_batch', 'scheduled_interval'])));
     }
 
     private static function validateOverride(array $override)
@@ -218,18 +232,23 @@ class Modules_Help4DiskUsage_Store
     public static function validateReservation(array $pending, $domain)
     {
         if (!self::alive($pending) || !isset($pending['binding'], $pending['policy_binding']) ||
+            (($pending['source'] ?? 'manual') === 'scheduled' && !self::policy()['scheduled_enabled']) ||
             !hash_equals($pending['binding'], Modules_Help4DiskUsage_Access::binding($domain)) ||
             !hash_equals($pending['policy_binding'], self::effective($domain)['policy_binding'])) {
             throw new RuntimeException('Scan reservation or subscription policy changed');
         }
     }
 
-    public static function reserve($domain, $actor, $admin)
+    public static function reserve($domain, $actor, $admin, $source = 'manual')
     {
         Modules_Help4DiskUsage_Access::authorize($actor, $domain, $admin);
         $binding = Modules_Help4DiskUsage_Access::binding($domain);
         $policy = self::effective($domain);
-        return self::locked(function () use ($domain, $actor, $admin, $binding, $policy) {
+        return self::locked(function () use ($domain, $actor, $admin, $binding, $policy, $source) {
+            if (!in_array($source, ['manual', 'scheduled'], true) ||
+                ($source === 'scheduled' && (!self::policy()['scheduled_enabled'] || $admin))) {
+                throw new RuntimeException('Scheduled refresh unavailable');
+            }
             $state = self::prune(self::read('state'));
             $now = time();
             $id = (string)$domain->getId();
@@ -257,6 +276,7 @@ class Modules_Help4DiskUsage_Store
             $state['pending'][$id] = ['time' => $now, 'token' => $token, 'binding' => $binding,
                 'actor' => $actor->getId(), 'admin' => $admin === true && $actor->isAdmin(),
                 'seconds' => $policy['seconds'], 'policy_binding' => $policy['policy_binding'],
+                'source' => $source,
                 // Allow the entire bounded queue to drain at the hard maximum runtime.
                 'expires_at' => $now + $policy['queue_limit'] * 135 + 600];
             $state['attempts'][] = ['time' => $now, 'domain' => $id, 'actor' => $actor->getId(), 'binding' => $binding];
@@ -266,12 +286,13 @@ class Modules_Help4DiskUsage_Store
         });
     }
 
-    public static function finish($id, $token, $report = null)
+    public static function finish($id, $token, $report = null, $validate = null)
     {
-        self::locked(function () use ($id, $token, $report) {
+        self::locked(function () use ($id, $token, $report, $validate) {
             $state = self::read('state', ['attempts' => [], 'pending' => []]);
             if (isset($state['pending'][$id]) && hash_equals($state['pending'][$id]['token'], $token)) {
                 if ($report !== null) {
+                    if ($validate !== null) { $validate($state['pending'][$id]); }
                     self::write('report-' . (int)$id, $report);
                 }
                 self::write('status-' . (int)$id, ['binding' => $state['pending'][$id]['binding'],

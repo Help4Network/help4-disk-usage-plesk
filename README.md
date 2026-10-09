@@ -2,7 +2,7 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
-**0.2.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md). Automated CI is not Plesk certification.
+**0.3.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md) and the [Linux/Windows target matrix](docs/platform-support.md). Automated CI is not Plesk certification.
 
 ## Features
 
@@ -13,6 +13,8 @@ Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsid
 - File -> parent / tree -> itself **Open in File Manager** links in a new authenticated Plesk tab, preserving native panel navigation.
 - Administrator-editable runtime/TTL/refresh/server queue policies, native service-plan profiles and per-subscription overrides. One scanner at a time; expired/failed scans preserve the previous report.
 - Administrator-only stable-release discovery with bounded HTTPS checks, cooldown and last-check timestamps; reviewed native upgrades, not unattended download-and-execute.
+- Opt-in native scheduled stale-report rotation, administrator-selected small batches and cooldown, with the same shared admission caps as manual refreshes.
+- CLI Python/platform diagnostics and fail-closed runtime checks before settings saves and scans.
 - Current Plesk authorization on reports, refresh, export and file jumps. Worker authorization before and after scans. Ownership/home/name/GUID changes invalidate cached reports.
 
 No deletion, rename, file-content reading, public arbitrary-root endpoint or automatic page-refresh loop. Cleanup stays in Plesk File Manager and the application. Bytes are logical file sizes, **not quota/allocated disk usage**; hard-link entries count separately. Mail/databases/backups outside the home are excluded. Windows reports filesystem entries, not POSIX inode quota. Symlinks, junctions, reparse points, cross-device trees and unsafe names are not followed.
@@ -38,6 +40,8 @@ php tests/security.php
 php tests/policy.php
 php tests/releases.php
 php tests/controllers.php
+php tests/scheduler.php
+php tests/runtime.php
 php tests/lint.php
 python3 scripts/package.py
 ```
@@ -50,13 +54,13 @@ Verify `dist/SHA256SUMS`, then upload the built ZIP through **Extensions > My Ex
 
 ```sh
 # Linux root
-plesk bin extension --install /absolute/path/help4-disk-usage-0.2.0-1.zip
+plesk bin extension --install /absolute/path/help4-disk-usage-0.3.0-1.zip
 ```
 
 ```powershell
 # Windows elevated PowerShell
-Get-FileHash 'C:\Lab\help4-disk-usage-0.2.0-1.zip' -Algorithm SHA256
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.2.0-1.zip'
+Get-FileHash 'C:\Lab\help4-disk-usage-0.3.0-1.zip' -Algorithm SHA256
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.3.0-1.zip'
 ```
 
 Open **Disk Usage Audit** from native Plesk navigation. **Scan settings** selects the real Python executable and policy. Create synthetic unrelated customers/resellers first and follow [native validation](docs/validation.md). Click **Refresh scan**, then **Check status**. The scan runs in a background task; the customer page never auto-submits or refreshes itself.
@@ -71,7 +75,9 @@ Administrator subscription overrides:
 
 `hourly:0` disables customer refresh. Native service plans expose one exclusive Disk Usage Audit profile: **Host default**, **Extended**, or **Customer refresh disabled**. No selected profile uses host default. Extended defaults to 6 requests/hour and 90s runtime; administrators can edit default/extended profile limits in Scan settings. Effective limits use subscription override, then profile, then host defaults. Disabled always blocks customer/reseller refresh, even with an enabling override; administrator requests still obey global admission limits. Plan/profile changes invalidate queued work before scanning or publication. Native plan synchronization is a Linux/Windows validation gate, not yet live-certified behavior.
 
-Queue reservations expire after enough time for the configured queue to drain at the hard maximum runtime, plus a ten-minute allowance (46 minutes at the default queue size). Expired work is not silently kept queued. There is no scheduled oldest-cache rotation yet.
+Queue reservations expire after enough time for the configured queue to drain at the hard maximum runtime, plus a ten-minute allowance (46 minutes at the default queue size). Expired work is not silently kept queued. Installation registers one native hourly rotation task; work is **disabled by default**. Administrators can enable it in Scan settings. Default: two stale/missing reports every six hours. Scheduled work respects disabled plans, owner/host limits and one active scanner. See [bounded rotation and native scale gates](docs/platform-support.md).
+
+Run `plesk bin extension --exec help4-disk-usage doctor.php` on Linux, or `plesk bin extension.exe --exec help4-disk-usage doctor.php` on Windows, after configuring Python. This checks runtime capabilities without inspecting subscription contents; it does not certify storage ACLs or native panel behavior.
 
 ## Upgrade, Rollback And Uninstall
 
@@ -85,7 +91,7 @@ Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `p
 
 [Operator tutorial](docs/tutorial.md), [isolated lab results](docs/testing-lab.md), [WHMCS integration status](docs/whmcs.md), [security policy](SECURITY.md), [release gates](docs/validation.md) and [marketing kit](docs/marketing.md). A separately named Plesk adapter must not overwrite the cPanel module. Public screenshots use synthetic example.test data only; private production evidence never enters this repo.
 
-Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`). It includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest. It excludes private lab evidence, credentials and security-scan artifacts.
+Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`) **only after fresh version-matched screenshots exist**. The builder fails closed on missing captures. Existing 0.2.0 screenshots/kits are historical preview material, not 0.3.0 evidence. It includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest, excluding private lab evidence, credentials and security-scan artifacts.
 
 ## Official SDK References
 

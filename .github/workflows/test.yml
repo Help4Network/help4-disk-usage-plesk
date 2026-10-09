@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python: ['3.10', '3.13']
+        python: ['3.10', '3.13', '3.14']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -16,19 +16,58 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests -v
+      - run: python scripts/package.py
   php:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        php: ['8.3', '8.4']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - run: php tests/lint.php
       - run: php tests/security.php
       - run: php tests/policy.php
       - run: php tests/releases.php
       - run: php tests/controllers.php
+      - run: php tests/scheduler.php
+      - run: php tests/runtime.php
+
+  linux-distros:
+    name: Linux runtime (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {image: 'almalinux:8', python: python3.11}
+          - {image: 'almalinux:9', python: python3.11}
+          - {image: 'almalinux:10', python: python3}
+          - {image: 'ubuntu:22.04', python: python3}
+          - {image: 'ubuntu:24.04', python: python3}
+          - {image: 'ubuntu:26.04', python: python3}
+          - {image: 'debian:12', python: python3}
+          - {image: 'debian:13', python: python3}
+    container: ${{ matrix.image }}
+    steps:
+      - name: Install test runtime only
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install -y python3 git libstdc++6
+          else
+            dnf install -y '${{ matrix.python }}' git libstdc++
+          fi
+      - uses: actions/checkout@v4
+      - name: Runtime and descriptor collector regressions
+        run: |
+          '${{ matrix.python }}' -I -S extension/plib/collector/runtime.py
+          '${{ matrix.python }}' -m unittest discover -s tests -v
+          '${{ matrix.python }}' scripts/package.py

@@ -2,6 +2,8 @@
 
 Help4 Disk Usage for Plesk, MIT licensed, built by https://help4network.com. Repository: https://github.com/Help4Network/help4-disk-usage-plesk. Reuse the official H4 mark, not a metrics/chart icon.
 
+Current source is 0.3.0 preview: opt-in scheduled rotation and runtime diagnostics are implemented, not native-certified. The 0.2.0 kit and image list below are historical. Fresh 0.3.0 template captures are required before the version-matched kit builder can succeed. Do not relabel old screenshots or announce a stable release.
+
 Announce a **development preview for testing/review** until BOTH native Windows and Linux gates pass. Designed for Linux and Windows is not production certification. Do not claim best-on-market, quota parity, native Windows inode quotas, implemented cleanup, automatic updates or WHMCS availability until verified.
 
 Public images use actual extension rendering with synthetic example.test data or clearly labeled illustrative mockups. No cPanel captures masquerading as Plesk, no production/customer/IP/session paths, and no reliance on blur. Tag Plesk after verifying the actual account; never imply endorsement. Record final publication URLs and screenshot evidence privately.
@@ -31,7 +33,7 @@ Suggested short description: "An MIT-licensed development preview for subscripti
 
 Available in source: four offender views, relative paths, last-scan/coverage/failure status, search/sort/paging, CSV/JSON, one-worker lock, host-configurable refresh/runtime/queue limits, native service-plan profiles, explicit subscription overrides, bound finite queue leases, admin-only stable-release discovery, current authorization checks and a small Help4 Network footer. The earlier 0.1.1 native Linux package installation and native Windows/Linux collector CI passed. See [lab limits](testing-lab.md) and current CI before describing end-to-end panel operation; source features are not native production certification.
 
-Not released: WHMCS Plesk adapter, scheduler, unattended updater, file deletion/editing, quota parity, production certification or measured performance superiority. Native service-plan synchronization, release-page network/native upgrade behavior and all role/GUI/background-task gates need validation. A Plesk trial/license/EULA and container task-manager gate still block native role/GUI/background-scan validation. Windows Plesk ACL testing is also pending.
+Not released: WHMCS Plesk adapter, unattended updater, file deletion/editing, quota parity, production certification or measured performance superiority. Native service-plan synchronization, release-page network/native upgrade behavior and all role/GUI/background-task gates need validation. A Plesk trial/license/EULA and container task-manager gate still block native role/GUI/background-scan validation. Windows Plesk ACL testing is also pending.
 
 ## Initial Social Publication
 

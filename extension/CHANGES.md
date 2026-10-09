@@ -1,3 +1,12 @@
+# 0.3.0 Development Preview
+
+- Add disabled-by-default native scheduled stale-report rotation with 1-4 queued subscriptions per tick, host/actor/subscription caps, finite admission attempts and a configurable 1-24 hour cooldown. Disabled plans remain disabled. Installation registration is idempotent; removal preserves unrelated tasks and refuses active/pending scans.
+- Add Python 3.10+ native filesystem capability diagnostics and checks before saving a runtime or traversing a subscription. CLI diagnostics do not certify native panel roles or Windows ACLs.
+- Recheck queued authorization, identity, policy and lease inside the publication state lock; disabling scheduled refresh revokes scheduled reservations.
+- Extend native Windows/Linux Python and PHP CI and AlmaLinux/Ubuntu/Debian collector matrices. These are not licensed-panel installation/GUI/ACL proof.
+- Remove the PHP 8.5 curl_close deprecation in release transport.
+- Stable 1.0.0, native Windows/Linux QA, Windows storage ACLs, large-fleet inventory query bounds and the WHMCS adapter remain gated. Current preview tutorial images remain historical 0.2.0 captures; the kit builder requires fresh version-matched captures before packaging 0.3.0 tutorials.
+
 # 0.2.0-1
 
 Native service-plan profiles: host default, extended limits and customer refresh disabled. Host-editable profile limits and explicit subscription overrides retain hard ceilings; disabled plans cannot be re-enabled by an override. Conflicting or unavailable native plan data fails closed. Queued work binds its effective policy as well as current subscription identity.

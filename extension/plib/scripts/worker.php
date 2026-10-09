@@ -28,6 +28,7 @@ try {
     if (!is_file($python)) {
         throw new RuntimeException('Python runtime not configured');
     }
+    Modules_Help4DiskUsage_Runtime::check($python);
     $command = [$python, '-I', '-S', pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'scan.py',
         '--root', $domain->getHomePath(), '--seconds', (string)min(120, max(5, (int)$pending['seconds']))];
     $pipes = [];
@@ -78,7 +79,12 @@ try {
         ? $report['bytes'] - $previous['bytes'] : null;
     $report['binding'] = $binding;
     $report['built_by'] = ['name' => 'Help4 Network', 'url' => 'https://help4network.com'];
-    Modules_Help4DiskUsage_Store::finish($id, $token, $report);
+    Modules_Help4DiskUsage_Store::finish($id, $token, $report, function ($reservation) use ($id) {
+        // Serialize the final policy/lease check with report publication and admission.
+        $current = pm_Domain::getByDomainId((int)$id);
+        Modules_Help4DiskUsage_Access::authorizeQueued(pm_Client::getByClientId((int)$reservation['actor']), $current, $reservation);
+        Modules_Help4DiskUsage_Store::validateReservation($reservation, $current);
+    });
 } catch (Throwable $e) {
     Modules_Help4DiskUsage_Store::finish($id, $token);
     // Absolute paths and subprocess diagnostics stay out of customer-facing task output.

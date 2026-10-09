@@ -41,7 +41,7 @@ class Modules_Help4DiskUsage_Releases
             if (curl_exec($handle) === false) { throw new RuntimeException('Release check unavailable'); }
             return ['status' => curl_getinfo($handle, CURLINFO_HTTP_CODE), 'body' => $body];
         } finally {
-            curl_close($handle);
+            unset($handle);
         }
     }
 
