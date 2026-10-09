@@ -39,6 +39,7 @@ jobs:
       - run: php tests/controllers.php
       - run: php tests/scheduler.php
       - run: php tests/runtime.php
+      - run: php tests/process.php
 
   linux-distros:
     name: Linux runtime (${{ matrix.image }})

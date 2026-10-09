@@ -17,6 +17,7 @@ php tests/releases.php
 php tests/controllers.php
 php tests/scheduler.php
 php tests/runtime.php
+php tests/process.php
 php tests/lint.php
 python3 scripts/package.py
 (cd dist && sha256sum -c SHA256SUMS)
@@ -35,6 +36,7 @@ php tests/releases.php
 php tests/controllers.php
 php tests/scheduler.php
 php tests/runtime.php
+php tests/process.php
 php tests/lint.php
 py -3 scripts/package.py
 Get-Content .\dist\SHA256SUMS

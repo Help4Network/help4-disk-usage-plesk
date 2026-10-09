@@ -7,6 +7,7 @@
 - Remove the PHP 8.5 curl_close deprecation in release transport.
 - Fix the scheduled-refresh checkbox sizing on desktop/mobile, add six fresh labeled 0.3.0 actual-template synthetic screenshots, and update operator instructions and public captions/alt text.
 - Test runtime response size, timeout, malformed data, readiness/platform and subprocess exit failures without widening the five-second diagnostic limit.
+- Replace Windows-blocking anonymous output pipes with temporary-file capture and monotonic process polling for diagnostics and scans. Scanner output remains in private extension storage; stderr is discarded. Direct-process termination and cleanup regressions run on both OSes.
 - Stable 1.0.0, native Windows/Linux QA, Windows storage ACLs, large-fleet inventory query bounds and the WHMCS adapter remain gated. Synthetic tutorials are not native validation evidence.
 
 # 0.2.0-1

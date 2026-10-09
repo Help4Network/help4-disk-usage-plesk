@@ -15,6 +15,7 @@ def build():
     version, release = meta.findtext("version"), meta.findtext("release")
     package = ROOT / "dist" / f"help4-disk-usage-{version}-{release}.zip"
     paths = [ROOT / "README.md", ROOT / "LICENSE", ROOT / "SECURITY.md"]
+    paths += [ROOT / "extension/CHANGES.md"]
     paths += sorted((ROOT / "docs").glob("*.md"))
     expected = [f"synthetic-{name}-{version}.jpg" for name in
                 ("desktop", "entry-trees", "settings", "partial", "failure", "updates")]

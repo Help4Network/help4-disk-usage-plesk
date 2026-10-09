@@ -31,44 +31,11 @@ try {
     Modules_Help4DiskUsage_Runtime::check($python);
     $command = [$python, '-I', '-S', pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'scan.py',
         '--root', $domain->getHomePath(), '--seconds', (string)min(120, max(5, (int)$pending['seconds']))];
-    $pipes = [];
-    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-        $pipes, null, null, ['bypass_shell' => true]);
-    if (!is_resource($process)) {
-        throw new RuntimeException('Collector unavailable');
-    }
-    fclose($pipes[0]);
-    stream_set_blocking($pipes[1], false);
-    stream_set_blocking($pipes[2], false);
-    $output = '';
-    $deadline = microtime(true) + min(120, max(5, (int)$pending['seconds'])) + 15;
-    $exitCode = -1;
-    try {
-        do {
-            $output .= stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
-            $status = proc_get_status($process);
-            if (strlen($output) > 4 * 1024 * 1024 || microtime(true) > $deadline) {
-                proc_terminate($process);
-                throw new RuntimeException('Collector exceeded safety limit');
-            }
-            if (!$status['running']) {
-                $exitCode = $status['exitcode'];
-                break;
-            }
-            usleep(50000);
-        } while (true);
-        $output .= stream_get_contents($pipes[1]);
-        if (strlen($output) > 4 * 1024 * 1024) {
-            throw new RuntimeException('Collector exceeded output limit');
-        }
-    } finally {
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        proc_close($process);
-    }
-    $report = json_decode($output, true, 64, JSON_THROW_ON_ERROR);
-    if ($exitCode !== 0 || !is_array($report) || ($report['schema'] ?? 0) !== 1) {
+    $capture = Modules_Help4DiskUsage_Process::run($command,
+        min(120, max(5, (int)$pending['seconds'])) + 15, 4 * 1024 * 1024,
+        Modules_Help4DiskUsage_Store::directory());
+    $report = json_decode($capture['output'], true, 64, JSON_THROW_ON_ERROR);
+    if ($capture['exit'] !== 0 || !is_array($report) || ($report['schema'] ?? 0) !== 1) {
         throw new RuntimeException('Collector did not produce a valid report');
     }
     $current = pm_Domain::getByDomainId((int)$id);

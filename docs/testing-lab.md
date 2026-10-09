@@ -6,13 +6,15 @@ This records the historical 0.1.1 and 0.2.0 checkpoints and the 2026-10-09 0.3.0
 
 The existing isolated Plesk 18.0.81.2 / Ubuntu 24.04 AMD64-emulated container accepted the 0.3.0 extension. The installer still warned that the native task manager was unavailable. No EULA was accepted, licensing bypassed, public listener added, production server changed or routine snapshot created. Reinstallation checks idempotent task registration; it does not establish working background execution.
 
-Final package SHA-256, including the scheduled-refresh checkbox correction:
+Final package SHA-256, including the scheduled-refresh checkbox correction and subprocess timeout fix:
 
 ```text
-6a746ccb102a6bf3fcb3cc5a058c2ea795c124bc9ddc6702097315d3dc010e78
+c74143cd1d77a672e0e80897f9f00a86f860c0091bd78e91c74f8b239293764c
 ```
 
 The SDK readback showed extension version 0.3.0, one module-owned rotator, scheduling disabled, zero pending reservations and no active scanner. A disabled native rotation tick returned zero queued/skipped requests. The native `doctor.php` diagnostic initially failed its five-second subprocess deadline; a subsequent direct check completed in approximately one second and native extension-CLI readback succeeded with Python 3.12.3/Linux API availability. The intermittent emulation/load failure is recorded, not concealed by widening the diagnostic budget or counted as full reliability proof. Private-storage and native-panel validation flags remain false.
+
+New adversarial runtime tests on commit `cd335cc` then exposed a separate Windows PHP pipe issue: the 30-second sleeper prevented the nominal five-second deadline from being enforced. The runtime and scanner now use temporary-file capture and monotonic process polling, with stderr discarded and direct-child termination before cleanup. Scanner captures stay in private extension storage; content-free diagnostics alone use system temporary files. The timeout assertion is retained, not relaxed. Native Windows Plesk ACL and task tests still remain gates. PHP documents platform-specific non-blocking stream limitations in its [stream manual](https://www.php.net/manual/en/function.stream-set-blocking.php) and supports real-file descriptors in [proc_open](https://www.php.net/manual/en/function.proc-open.php).
 
 [CI for the 0.3.0 implementation](https://github.com/Help4Network/help4-disk-usage-plesk/actions/runs/37976936552) passed all 18 jobs: actual Windows/Linux Python 3.10/3.13/3.14 collector tests, Windows/Linux PHP 8.3/8.4 fixture tests, and eight AlmaLinux/Ubuntu/Debian runtime jobs. Check the exact final commit's workflow for subsequent tutorial/UI/runtime-fixture changes. Windows runner success is not a Windows Server Plesk install/ACL/GUI result; AlmaLinux success is not licensed CloudLinux/RHEL certification.
 
