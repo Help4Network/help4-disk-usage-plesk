@@ -51,8 +51,13 @@ jobs:
         shell: [powershell, pwsh]
     steps:
       - uses: actions/checkout@v4
-      - name: Adversarial descriptors and real NTFS metadata
-        shell: ${{ matrix.shell }}
+      - name: Adversarial descriptors and real NTFS metadata (Windows PowerShell 5.1)
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: '& ./tests/windows-acl.ps1'
+      - name: Adversarial descriptors and real NTFS metadata (PowerShell 7)
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
         run: '& ./tests/windows-acl.ps1'
 
   linux-distros:
