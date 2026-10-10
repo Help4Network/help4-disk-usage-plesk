@@ -42,6 +42,7 @@ jobs:
       - run: php tests/process.php
       - run: php tests/permissions.php
       - run: php tests/whmcs_scope.php
+      - run: php tests/whmcs_report.php
 
   windows-acl:
     name: Windows ACL preflight (${{ matrix.shell }})

@@ -17,7 +17,7 @@ This matrix describes the Plesk extension, not the separate cPanel/WHM/WHMCS pro
 | Native panel navigation and no idle reload | SDK page integration; passive GET/POST-303 fixtures; desktop/390px template QA | Native shell, five-minute idle and mobile role views pending |
 | Stable-release detection | Fixed-repository TLS/metadata/cooldown/admin-isolation/failure-retention fixtures | Native network page and reviewed upgrade/rollback pending |
 | Linux/Windows installable ZIP | Cross-platform deterministic builder, checksums; isolated Linux native install | Full-systemd licensed Linux and supported Windows Server install/uninstall pending |
-| WHMCS Plesk adapter and server health/deployment | Source-only current-entitlement/identity/transfer/payload guard and bounded health reducer with PHP fixtures | No installable addon, live transport, native dashboard or deployment; separate integration acceptance required |
+| WHMCS Plesk adapter and server health/deployment | Source-only entitlement/identity/transfer guard, bounded health reducer and metadata/export/navigation-intent parser; PHP and actual collector interoperability fixtures | No installable addon, live transport, native dashboard, authenticated File Manager jump or deployment; separate integration acceptance required |
 | Automatic package installation or file cleanup | Not implemented intentionally | No unattended updater, deletion, rename or content editing |
 
 Logical file bytes are not allocated blocks, billing totals or quota reconciliation. Windows entry counts are not POSIX inode quotas. Files outside the subscription home are excluded. Vendor OS support and extension proof are separate; see [Linux/Windows targets](platform-support.md).
