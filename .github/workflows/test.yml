@@ -93,3 +93,32 @@ jobs:
           '${{ matrix.python }}' -I -S extension/plib/collector/runtime.py
           '${{ matrix.python }}' -m unittest discover -s tests -v
           '${{ matrix.python }}' scripts/package.py
+
+  macos-developer:
+    name: macOS developer regressions (not a native Plesk target)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - name: Portable collector and unsupported-native-runtime fixtures
+        run: python -m unittest discover -s tests -v
+      - name: PHP control, entitlement and report regressions
+        run: |
+          php tests/lint.php
+          php tests/security.php
+          php tests/policy.php
+          php tests/releases.php
+          php tests/controllers.php
+          php tests/scheduler.php
+          php tests/runtime.php
+          php tests/process.php
+          php tests/permissions.php
+          php tests/whmcs_scope.php
+          php tests/whmcs_report.php
+      - name: Build portable preview artifact
+        run: python scripts/package.py
