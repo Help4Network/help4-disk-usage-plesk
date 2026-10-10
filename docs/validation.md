@@ -10,6 +10,8 @@ Linux: no-follow, replaced-directory identity, hidden/Unicode names, raw-byte fi
 
 Windows ACL automated tests cover raw descriptors (including deny/allow combinations, null DACLs, unsupported ACEs and inherited grants), real private-file and executable ACLs, ancestor replacement grants, junctions, safe-path rejection and limits on Windows runners under PowerShell 5.1 and 7. PHP tests reject malformed/nonzero/overbroad diagnostic responses. The [operator diagnostic](windows-acl.md) is a read-only snapshot, not native installer verification, continuous enforcement or complete Python dependency validation.
 
+Separate source-only WHMCS guard fixtures reject foreign/inactive services before IO, bind current client/server/subscription/owner/home/mapping identities and reread scope after IO. Health fixtures preserve unavailable/stale counters as null and enforce 20-server/measurement bounds. These do not establish native WHMCS session/database/permission behavior or an authenticated Plesk transport; see [WHMCS contract](whmcs.md).
+
 Create two unrelated customers, owned reseller subscriptions, an unrelated reseller and a limited additional user using synthetic example.test names only.
 
 1. Install ZIP; confirm native left navigation/header remain on admin, reseller, customer and impersonated pages.

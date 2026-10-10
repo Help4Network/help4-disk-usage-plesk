@@ -1,6 +1,6 @@
 <?php
 $root = dirname(__DIR__);
-foreach (['extension', 'tests'] as $directory) {
+foreach (['extension', 'integrations', 'tests'] as $directory) {
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . DIRECTORY_SEPARATOR . $directory, FilesystemIterator::SKIP_DOTS));
     foreach ($files as $file) {
         if (!in_array($file->getExtension(), ['php', 'phtml'], true)) { continue; }

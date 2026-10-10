@@ -2,6 +2,8 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
+The separate `help4_disk_usage_plesk` WHMCS adapter now has source-only current-entitlement and bounded health foundations with Windows/Linux fixture coverage. It has no installable addon, live transport or native dashboard yet. See the [accurate WHMCS status and integration contract](docs/whmcs.md); do not use the cPanel addon as Plesk compatibility proof.
+
 **0.3.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md) and the [Linux/Windows target matrix](docs/platform-support.md). Automated CI is not Plesk certification.
 
 ## Features
