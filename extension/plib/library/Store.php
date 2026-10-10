@@ -69,12 +69,37 @@ class Modules_Help4DiskUsage_Store
                 throw new RuntimeException('Queue lock ownership unavailable');
             }
         }
+        if (PHP_OS_FAMILY !== 'Windows' && !chmod(self::directory() . DIRECTORY_SEPARATOR . 'state.lock', 0600)) {
+            flock($handle, LOCK_UN); fclose($handle);
+            throw new RuntimeException('Queue lock permissions unavailable');
+        }
         try {
             return $callback();
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
         }
+    }
+
+    public static function mutex($name)
+    {
+        if (!in_array($name, ['scanner.lock', 'bridge.lock'], true)) { throw new RuntimeException('Invalid audit mutex'); }
+        $dir = self::directory();
+        $path = $dir . DIRECTORY_SEPARATOR . $name;
+        if (is_link($path)) { throw new RuntimeException('Audit mutex unavailable'); }
+        $handle = fopen($path, 'c');
+        if (!$handle) { throw new RuntimeException('Audit mutex unavailable'); }
+        try {
+            if (PHP_OS_FAMILY !== 'Windows') {
+                if (function_exists('posix_geteuid') && posix_geteuid() === 0 &&
+                    (!chown($path, fileowner($dir)) || !chgrp($path, filegroup($dir)))) {
+                    throw new RuntimeException('Audit mutex ownership unavailable');
+                }
+                if (!chmod($path, 0600)) { throw new RuntimeException('Audit mutex permissions unavailable'); }
+            }
+            if (!flock($handle, LOCK_EX | LOCK_NB)) { fclose($handle); return null; }
+            return $handle;
+        } catch (Throwable $e) { fclose($handle); throw $e; }
     }
 
     public static function policy()
@@ -297,6 +322,10 @@ class Modules_Help4DiskUsage_Store
                 }
                 self::write('status-' . (int)$id, ['binding' => $state['pending'][$id]['binding'],
                     'state' => $report === null ? 'failed' : 'complete', 'at' => gmdate('c')]);
+                $health = self::read('health', ['failed_scans' => 0, 'last_success_at' => null]);
+                if ($report === null) { $health['failed_scans'] = min(10000, $health['failed_scans'] + 1); }
+                else { $health['last_success_at'] = time(); }
+                self::write('health', $health);
                 unset($state['pending'][$id]);
                 self::write('state', $state);
             }

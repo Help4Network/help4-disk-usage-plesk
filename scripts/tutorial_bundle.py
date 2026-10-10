@@ -11,6 +11,7 @@ STAMP = (2026, 10, 8, 0, 0, 0)
 
 def build():
     runpy.run_path(str(ROOT / "scripts/package.py"), run_name="__main__")
+    runpy.run_path(str(ROOT / "scripts/package_whmcs.py"), run_name="__main__")
     meta = ET.parse(ROOT / "extension/meta.xml").getroot()
     version, release = meta.findtext("version"), meta.findtext("release")
     package = ROOT / "dist" / f"help4-disk-usage-{version}-{release}.zip"
@@ -21,6 +22,8 @@ def build():
                 ("desktop", "entry-trees", "settings", "partial", "failure", "updates")]
     paths += [ROOT / "docs/screenshots" / name for name in expected]
     paths += [package, ROOT / "dist/SHA256SUMS"]
+    whmcs = ROOT / "dist" / f"help4-disk-usage-plesk-whmcs-{version}-{release}.zip"
+    paths += [whmcs, whmcs.with_suffix(".zip.sha256")]
     for path in paths:
         if not path.is_file() or path.is_symlink():
             raise RuntimeError(f"Missing or unsafe public artifact: {path.name}")

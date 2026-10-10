@@ -1,7 +1,7 @@
 <?php
 class Modules_Help4DiskUsage_Permissions
 {
-    public static function check()
+    public static function check($python = null)
     {
         if (PHP_OS_FAMILY !== 'Windows') { throw new RuntimeException('Windows ACL preflight only'); }
         $root = getenv('SystemRoot');
@@ -14,7 +14,7 @@ class Modules_Help4DiskUsage_Permissions
         $command = [$shell, '-NoLogo', '-NoProfile', '-NonInteractive', '-File',
             pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'windows-acl.ps1',
             '-PrivateDirectory', Modules_Help4DiskUsage_Store::directory(), '-ProtectedPathsBase64',
-            base64_encode(json_encode([Modules_Help4DiskUsage_Store::policy()['python'],
+            base64_encode(json_encode([$python ?? Modules_Help4DiskUsage_Store::policy()['python'],
                          rtrim(pm_Context::getPlibDir(), '/\\'),
                          rtrim(pm_Context::getHtdocsDir(), '/\\')], JSON_THROW_ON_ERROR))];
         $capture = Modules_Help4DiskUsage_Process::run($command, 12, 16384);

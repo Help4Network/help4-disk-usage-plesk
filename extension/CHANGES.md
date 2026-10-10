@@ -1,4 +1,14 @@
-# 0.3.0 Development Preview
+# 0.3.0-2 Development Preview
+
+- Complete the separately installable Plesk WHMCS addon candidate: native lifecycle/migrations, current User/Client/product and admin-role checks, exact administrator-approved service/subscription/owner/install mappings, customer report/export/File Manager routes and a bounded paginated extension-health view. Deployment remains a reviewed manual native install, not a remote installer.
+- Add an opt-in native Plesk XML API bridge and verified-TLS transport with nonce/pin/current-identity checks, finite byte/deadline/rate limits and one in-flight request. Missing API administrator identity fails closed; licensed native authentication/task proof is still required.
+- Serialize mapping pin commits and disconnect tombstones; repeat current entitlement around IO. Transfers, changed endpoints/pins, permissions, suspended/foreign services and masquerading deny without foreign identities.
+- Run the Windows ACL snapshot before selected runtime saves, worker execution and bridge enable. Preserve read-only limits and separate native identity/dependency/effective-access gates.
+- Refuse uninstall during scanner, reservation or RPC activity; disable bridge before owned scheduler removal. Protect POSIX lock files even when created by the panel user. Record bounded private scan health instead of fabricated healthy-zero.
+- Add deterministic separate WHMCS ZIP/internal SHA-256 manifest, full deployment/lifecycle runbook, transport/SQLite/HTML/lifecycle regressions and cross-platform CI. Fixtures and synthetic rendering do not certify native TLS, MySQL locks, WHMCS layouts or Plesk Linux/Windows installation.
+- Stable 1.0.0 remains blocked on licensed native Linux/Windows/WHMCS acceptance, post-fix security review and explicit approval. No stable tag/updater promotion or preview launch is made.
+
+# 0.3.0-1 Development Preview
 
 - Add a source-only WHMCS collector-metadata parser with bounded rows/JSON, fixed hints/credit, partial/stale coverage, labelled spreadsheet-facing CSV and exact retained-path navigation intents. Linux/Windows actual collector interoperability is tested; no native WHMCS export screen, transport or authenticated File Manager jump is shipped.
 - Add separate source-only Plesk WHMCS entitlement/health foundations: current actor/service/immutable mapping checks before and after reads, generic foreign-service denial, payload/freshness bounds and a 20-server extension-only health reducer that preserves unknown/stale states. No installable WHMCS addon, migration, public endpoint, native dashboard or transport is shipped yet.

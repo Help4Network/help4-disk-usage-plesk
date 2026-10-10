@@ -39,5 +39,9 @@ if (PHP_OS_FAMILY === 'Windows') {
     check(!in_array('-ExecutionPolicy', $command, true) && !in_array('Bypass', $command, true), 'Execution policy bypass');
     check(count(json_decode(base64_decode($command[array_search('-ProtectedPathsBase64', $command, true) + 1], true), true)) === 3,
         'Collector, web assets and executable not all selected');
+    Modules_Help4DiskUsage_Permissions::check('C:\\Candidate\\python.exe');
+    $command = Modules_Help4DiskUsage_Process::$command;
+    $paths = json_decode(base64_decode($command[array_search('-ProtectedPathsBase64', $command, true) + 1], true), true);
+    check($paths[0] === 'C:\\Candidate\\python.exe', 'Selected candidate executable was not inspected');
 }
 echo "Permission diagnostic platform, bounded command and fail-closed response tests passed\n";

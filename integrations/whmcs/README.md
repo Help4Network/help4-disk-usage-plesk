@@ -1,20 +1,25 @@
-# Plesk WHMCS Adapter Foundation
+# Plesk WHMCS Addon
 
-Reserved addon name: **`help4_disk_usage_plesk`**. Source-only security foundation, not an installable WHMCS addon, remote Plesk API or customer/admin dashboard. No activation entrypoint, database migration, hook, credentials or public endpoint is provided yet. Do not upload this directory into a production WHMCS installation or overwrite the separate cPanel addon.
+Installable candidate source: **help4_disk_usage_plesk**, separately packaged and never interchangeable with the cPanel addon. Version 0.3.0-2 is a development preview, not licensed/native production certification.
 
-The namespace `Help4\DiskUsagePlesk` contains:
+Implemented: native addon activation/upgrade/deactivation, current User/Client Account/product permission and administrator role checks, exact service/subscription/owner/installation mappings, bounded verified-TLS Plesk XML transport, customer reports/exports and native File Manager jump, service-sidebar link and manual paginated administrator extension-health dashboard.
 
-- `Scope::read`: current selected-client/product-permission, active-service and approved immutable mapping checks before IO, plus fresh actor/entity rechecks before returning the payload. Foreign or missing services never reach the private-read callback. Service/client/server changes, subscription/owner GUID changes, home-identity changes, mapping revision changes and permission/account switches fail with one generic denial.
-- `Health::page`: at most 20 Plesk server rows from already-collected observations. Default freshness is 300 seconds; missing, invalid, foreign-bound or expired observations are not healthy zero. Counters remain null on unavailable/stale measurements. Output is extension-only, includes no customer identifiers/paths, and explicitly does not certify native Plesk validation.
-- `Report::read`: composes the scope guard with a strict collector-metadata allowlist. The parser preserves partial/stale coverage and drops private bindings, remote URLs and arbitrary remediation text. Bounded JSON/CSV helpers use fixed credit; CSV filenames have a visible `path: ` label. `navigationIntent` accepts only a retained exact path/kind and returns a relative parent, never a remote URL or an authenticated File Manager jump. Parsing/export helpers alone do not authorize a service.
+Build from repository root with `python3 scripts/package_whmcs.py` (Windows: `py -3`). Verify the archive SHA-256 and internal manifest. Extract outside the web root; upload only `modules/addons/help4_disk_usage_plesk`. Activate and explicitly select administrator roles. Customer Reports defaults off. Deploy the native Plesk ZIP separately, enable its bridge from the authorized terminal, Connect the exact existing server and Approve the intended active service. Valid trusted HTTPS is mandatory; never disable certificate checks.
 
-Run fixtures from the repository root:
+Full [deployment/configuration/lifecycle and acceptance instructions](../../docs/whmcs.md) are also included as DEPLOYMENT.md in the addon ZIP. Native Plesk Linux/Windows and licensed WHMCS/MySQL acceptance remain open. The current emulated Linux container does not prove working background tasks; fixture success is not native permission proof.
 
+Test from repository root:
 ```sh
 php tests/whmcs_scope.php
 php tests/whmcs_report.php
+php tests/whmcs_transport.php
+php tests/whmcs_native.php
+php tests/lifecycle.php
+python3 -m unittest discover -s tests -v
 ```
 
-These tests run on Windows/Linux PHP CI. They do not establish native WHMCS authorization, database transactions, authenticated Plesk transport or runtime deployment. See the [integration contract](../../docs/whmcs.md) for the remaining acceptance gates.
+Default WHMCS read cap: 30/User/hour (editable up to 120); requests 120/server/hour (up to 240), one in flight; native bridge 600/hour, one in flight. Remote refresh also applies native subscription/plan/queue/runtime caps. Failures consume admission budgets. Admin GET is passive, health is extension-only, and unknown/stale is not healthy-zero.
+
+No unchecked remote installer, SSO minting, arbitrary roots, file contents/deletion, billing mutations or preview social launch is included. Deactivation retains only this addon's private mapping/observation/limit tables; see the runbook for explicit reviewed removal.
 
 Built by [Help4 Network](https://help4network.com).

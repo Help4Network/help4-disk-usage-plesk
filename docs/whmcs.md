@@ -1,62 +1,99 @@
-# WHMCS Integration
+# WHMCS Plesk Addon: Installation And Operation
 
-The planned Plesk adapter name is `help4_disk_usage_plesk`, separate from the cPanel module. Source-only entitlement, health and metadata/export/navigation primitives now live in `integrations/whmcs/modules/addons/help4_disk_usage_plesk/lib`. **There is still no installable addon, customer/admin dashboard, activation migration, hook or authenticated remote transport in this preview.** Do not upload the foundation into production, overwrite the cPanel addon or reuse the WHM API protocol for Plesk.
+## Status And Scope
 
-Pre-1.0 acceptance: authenticated server-scoped ingestion/deployment; immutable Plesk subscription GUID + WHMCS server ID mapping; current active service/client ownership on every customer view; no stale healthy-zero status; no customer-supplied roots or cached-owner entitlement.
+The separately named `help4_disk_usage_plesk` addon is now installable candidate source in the 0.3.0-2 preview. It includes activation/upgrade migrations, current WHMCS actor/role adapters, customer reports/exports, a Service Details sidebar link, retained-path native File Manager navigation and a paginated administrator extension-health dashboard. The opt-in Plesk XML API bridge and verified-TLS transport are implemented and fixture-tested. **Licensed native WHMCS/Plesk Linux and Windows validation remains open; this is not a stable production release.**
 
-0.3.0 does not expose a production remote WHMCS ingestion/deployment API. Native Plesk isolation gates must pass first. The separate cPanel repository's WHMCS module does not establish Plesk compatibility. No billing/chargeback/ticket changes belong to this extension.
+Do not overwrite `help4_disk_usage` (the cPanel addon) or reuse WHM APIs for Plesk. No billing, ticket, chargeback, file-deletion or file-content API is included. The dashboard measures this extension, not all server services, hardware or overall server health.
 
-## Implemented Foundation Contract
+## Requirements And Build
 
-`Help4\DiskUsagePlesk\Scope::read($serviceId, $actorReader, $entityReader, $read)` is a backend library, not an HTTP handler or authentication system. All callbacks must be trusted adapter code; none may be supplied by a browser or deserialize executable content.
+Use a supported WHMCS installation with its native Plesk server module, PHP 8.3/8.4, cURL, DOM/libxml and the native Capsule database. These are candidate test runtimes, not a claim that all WHMCS versions support them. Follow the exact installed WHMCS version's PHP/system requirements. Native MySQL transaction/row-lock behavior is an acceptance gate; SQLite fixtures are not that proof.
 
-The actor reader must resolve a currently authenticated WHMCS User **and currently selected Client Account**, not assume a User ID equals a Client ID or use a cached scan's owner. It returns `authenticated`, `user_id`, `client_id`, `products_allowed`, `manage_products_allowed` and `masquerading`. Both product permissions are required; missing/false permissions fail. Masquerading is denied in this foundation until a separately verified native support workflow exists. Do not bypass this with an admin session flag. Use native WHMCS CurrentUser and current account association/permissions; there is no implemented native actor adapter yet.
+The Plesk extension is a separate deployment on Linux or Windows Server. Configure its administrator-owned Python executable and verify native private storage, role isolation, task dispatch and lifecycle first. Keep customer reports and scheduled rotation disabled until licensed lab acceptance. Bridge authentication requires a current native Plesk administrator identity; if API-RPC does not establish it, the bridge deliberately denies the call. Never replace that check with an assumed administrator.
 
-The entity reader must freshly load a single service, its current enabled Plesk server and an administrator-approved binding. It returns:
+```sh
+python3 scripts/package.py
+python3 scripts/package_whmcs.py
+php tests/whmcs_scope.php
+php tests/whmcs_report.php
+php tests/whmcs_transport.php
+php tests/whmcs_native.php
+php tests/lifecycle.php
+```
 
-| Object | Required fields |
-| --- | --- |
-| `service` | `id`, `client_id`, `server_id`, exact `Active` status, `plesk` module, boolean `server_enabled`, `username`, `domain`, `server_binding` |
-| `binding` | `service_id`, `client_id`, `server_id`, `username`, `domain`, `server_binding`, `subscription_guid`, `owner_guid`, `identity_binding`, `revision` |
+Windows builds use `py -3`. The addon ZIP is `dist/help4-disk-usage-plesk-whmcs-0.3.0-2.zip`, with an adjacent SHA-256 file and an internal per-file manifest. It contains `modules/addons/help4_disk_usage_plesk` plus documentation/license; it is not a native Plesk upload ZIP.
 
-The IDs are positive 32-bit integers or canonical decimal strings. GUIDs must be canonical lowercase non-nil UUID strings. Digests/revisions must be 64 lowercase hex characters. Native database/transport adapters must normalize verified native data to this contract, not coerce missing/invalid data into success. Use a transaction-consistent, bounded lookup; duplicate/ambiguous service or subscription matches must fail rather than select the first row.
+## Install And Connect In An Authorized Lab
 
-`server_binding` must come from a reviewed current server endpoint/install identity, including verified TLS/server identity, not just a hostname or an untrusted response string. `identity_binding` represents the native Plesk subscription's current GUID/owner/name/home binding. `revision` is an administrator-controlled random mapping revision; replace it on remapping and invalidate older cache rows. Never automatically rebind by a matching username/domain or copy a cached client owner after transfer. Credentials stay in WHMCS's protected configuration and are not digest inputs exposed to clients.
+1. Verify the addon ZIP SHA-256 against the reviewed artifact. Extract it outside the web root. Verify its internal `SHA256SUMS`; upload only `modules/addons/help4_disk_usage_plesk` into the WHMCS root's matching directory. Do not serve deployment documents or private evidence from that root.
+2. In native WHMCS Addon Modules, activate **Plesk Disk Usage Audit** and explicitly select authorized administrator roles in Access Control. **Customer Reports** defaults off. Activation creates only the three separately named private addon tables; it never modifies core services or provisions servers.
+3. Use an existing enabled native Plesk server record. Its hostname/IP and port are administrator-controlled; choose a hostname matching a valid trusted HTTPS certificate. Credentials come only from WHMCS's protected core server record: Plesk API key in the native access-hash field, or native admin username/decrypted core password. No new secret field is exposed. Do not print credentials or place them in URLs, Git or screenshots.
+4. Install the reviewed native extension separately using the Linux/Windows commands in the operator tutorial. Configure Python, check runtime/storage, then enable the opt-in bridge from the authorized server terminal:
 
-Only an authorized initial scope reaches the private-read callback. Its result must contain matching `server_id`, `server_binding`, `subscription_guid`, `owner_guid`, `identity_binding`, `revision`, a fresh integer `identity_checked_at`, and array `payload`. Identity evidence older than 30 seconds or more than five seconds ahead is rejected. Report scan age is separate and must remain visible in the future UI. The payload is limited to 256 KiB encoded JSON and depth 16. Extra envelope fields are not returned.
+```sh
+# Linux
+plesk bin extension --exec help4-disk-usage bridge.php enable
+plesk bin extension --exec help4-disk-usage bridge.php status
+```
 
-The read callback must use authenticated current native identity evidence, not relabel a cached identity with the current time. Timestamps, fingerprints and matching strings are **not authentication, signatures or replay protection**. The future transport must bind the response to the exact request/server, verify TLS without redirects or insecure fallback, apply finite connection/response/deadline caps and recheck Plesk identity/authorization around report retrieval. No network transport is implemented by these libraries and they cannot interrupt a blocking callback. The generic scope guard is not a report parser or file-content API; use the separate report allowlist next. Future views must still escape HTML and preserve native authorization on File Manager links.
+```powershell
+# Windows Server
+plesk bin extension.exe --exec help4-disk-usage bridge.php enable
+plesk bin extension.exe --exec help4-disk-usage bridge.php status
+```
 
-After the callback, the guard rereads the actor, service, server and binding and compares the complete scope fingerprint. Transfer, suspension, reassignment, endpoint/mapping changes and permission/account switches abort without returning the payload. This is a before/after check, not a distributed lock against changes after the result returns; the eventual route must render only in this authorized context and reauthorize every export/jump/refresh.
+5. Open the addon in the WHMCS admin area. **Connect** the exact server record. This pins a random non-secret installation identity returned over authenticated verified TLS. A changed endpoint or installation pin fails closed; investigate instead of silently rebinding.
+6. **Approve service** using its existing positive service ID. The active native Plesk product/server, exact domain and system username must match current native subscription and owner GUIDs. A subscription home/name/owner binding and random mapping revision are stored. There is no automatic matching by username, cached client owner or customer-supplied GUID.
+7. Perform the negative/native matrix below. Only then enable **Customer Reports** for the candidate lab. Customers enter from Service Details > Disk Usage Audit or `index.php?m=help4_disk_usage_plesk`. Both current Products and Manage Products permissions are required. A WHMCS User ID is never treated as a Client Account ID.
 
-## Metadata, Exports And Navigation
+A fresh connection with no scan history is unknown/degraded, not a successful zero. Run the native subscription scan and confirm completion before expecting report/health evidence. A queued API response means admission, not completion.
 
-`Report::read` composes `Scope::read` with the metadata parser and uses the same generic service denial. `Report::normalize`, `json`, `csv` and `navigationIntent` are data helpers, **not authorization**. Every future view/export/jump route must obtain a fresh scoped report first. Do not store a normalized report as evidence of continuing entitlement, render raw transport data or accept these helper inputs from a browser.
+## Reports And File Manager
 
-The parser accepts collector schema 1 for Linux/Windows with canonical UTC scan time, typed bounded totals, finite duration, known limit/category values and at most 200 rows in each of the four retained ranking sections. It verifies numeric/category consistency, section kinds and duplicate/conflicting rows. Input and normalized JSON are limited to 256 KiB/depth 16; over-budget or malformed reports fail closed, not silent truncation. Bytes remain logical file bytes, not quota or billing reconciliation. PHP must be 64-bit and numeric metadata must fit the exact integer range used by common JSON clients.
+Views and exports reread the authenticated User, selected Client Account, current permissions, active service/product, enabled server and approved mapping before and after remote IO. Masquerading sessions are denied. Current native subscription identity is checked around report retrieval; cached ownership is not entitlement.
 
-Relative paths must be valid UTF-8, at most 4,096 bytes and free of traversal, absolute/drive/UNC paths, backslashes, colons, control/format characters and line separators. Only a directory may use the exact `.` subscription-root marker. Windows paths additionally reject device names (including the reserved superscript COM/LPT variants), invalid characters and trailing dots/spaces; see [Microsoft naming rules](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file). Unsupported metadata/filenames make the report unavailable rather than claiming a complete filtered scan. Legitimate Unicode and literal percent characters are retained; no helper decodes a filename into a URL/path a second time.
+Reports show logical bytes, filesystem entries, last scan/age, partial or complete coverage, ranked offenders and fixed remediation hints. Search/sort/paging operate on bounded retained rows, not every filesystem entry. CSV labels path cells and neutralizes spreadsheet formula prefixes; JSON/CSV retain a small Help4 Network credit. Raw transport fields, absolute roots and private bindings are excluded.
 
-Unknown fields, bindings, credentials, owners, remote URLs and arbitrary hints are not copied. Remediation hints and the Help4 Network credit are locally fixed. Partial/error/skipped/limited coverage forces lower-bound totals and null growth; stale age is calculated separately. TTL defaults to 3,600 seconds and may be set by trusted current policy within 300-86,400 seconds; pass the same TTL to view and export helpers. Scan freshness is not current identity evidence.
+**File Manager** first retrieves a fresh scoped report and requires exact retained path/kind membership. The destination uses only the current configured server endpoint and verified native domain ID. Plesk repeats native authorization and retained-path checks before opening its own File Manager. No SSO token, login account or session URL is minted; the user's existing Plesk login is required. Native File Manager remains responsible for current path access and junction policy.
 
-JSON preserves exact accepted filenames. CSV is a spreadsheet-facing presentation, capped at 512 KiB, with scan/coverage/stale metadata and a credit row. Every filename begins with the visible ASCII label `path: ` and is formatted with PHP's CSV writer with explicit empty escape and CRLF. This avoids putting the filename's formula-starting characters at the start of a cell; it deliberately changes the CSV display value, not the file on disk. Use JSON when exact machine-readable paths are required. Do not remove the label and assume a spreadsheet/import/re-save workflow remains safe; arbitrary downstream transformations are not certified. See [OWASP CSV guidance](https://owasp.org/www-community/attacks/CSV_Injection) and [PHP CSV formatting](https://www.php.net/manual/en/function.fputcsv.php).
+Refresh is a CSRF-protected POST followed by 303 GET. The native bridge reserves as the subscription owner, not as an unlimited administrator, so service-plan/override/disabled-plan and queue/runtime caps still apply. No automatic page refresh or fleet collection runs during an idle customer session.
 
-`navigationIntent` requires an exact retained path and matching file/directory kind and returns only that path, kind and relative directory (a file's parent, or the directory itself). It never accepts a supplied server/session URL, creates a login, redirects a browser or reads file contents. The authenticated native File Manager bridge is **not implemented**. Its future route must freshly verify the service/subscription and native user permissions, preserve the native session, correctly encode literal filenames once, and refuse stale/reassigned targets. An intent does not prove that a path still exists or is safe to edit; native File Manager remains the authority.
+## Limits And Health
 
-## Bounded Health Contract
+- WHMCS reads: default 30 per User/hour, administrator-editable 1-120. Includes fresh report, export, jump and refresh reads.
+- WHMCS remote requests: default 120 per server/hour, editable 1-240. One leased request per server, including failures. Administrative actions also have 30 attempts per administrator/hour and a five-second interval.
+- Native bridge: one request at a time, hard 600 admitted calls/hour; failed admitted calls count. Native scanner limits remain separate and stricter where configured.
+- Transport: HTTPS only, verified peer/hostname, no redirects/proxy fallback, three-second connect and 20-second total deadline, 512 KiB XML cap. Request JSON is 8 KiB; native JSON response is 350,000 bytes. All JSON/XML/schema/nonce/pin/current-identity checks fail closed.
+- Native Windows ACL helper: read-only snapshot before selected runtime saves, worker execution and bridge enable; 12-second subprocess/16 KiB output limits. It does not prove dependency trust or continuous enforcement.
+- Admin health: 20 Plesk records per page. GET performs no outbound collection; **Check** is per-server POST. Observations expire after five minutes. Missing, invalid, changed-pin, disabled and failed observations remain unknown/stale/degraded with unavailable counters as null.
 
-`Health::page` consumes a batch of at most 20 unique enabled/disabled Plesk server records and their observations. It does not make API calls. Each current server record has `id`, `module`, boolean `enabled` and current `server_binding`. Each observation binds schema/server identity and measurement time; successful observations contain extension version, runtime/storage checks, pending count (0-32), active scanners (0-1), failed-scan count (0-10,000) and nullable last-success timestamp.
+Health reports extension version, runtime/storage snapshot, pending/active scans, bounded cumulative failed scans and last successful scan. A historical failure is not silently reset into healthy status. Linux storage checks cover bounded flat private metadata; Windows checks inspect bounded selected ACL trees. Neither snapshot certifies native installation or continuous safety.
 
-States distinguish `disabled`, `unmeasured`, `stale`, `degraded`, `no_report`, `stale_report` and `observed`. A fresh successful observation is **observed**, not a claim that the entire server or every tenant is healthy. There is no CPU/disk/service-manager monitoring, fleet certification or stable-release approval implied. Raw errors, credentials, account identifiers and paths are not copied into the result. Native validation is always false in this preview foundation.
+## Upgrade, Rollback, Disconnect And Uninstall
 
-The eventual administrator route must enforce native addon-role permissions, CSRF/POST for collection/deployment, an editable bounded batch, one admitted action per server, finite server/global hourly caps and a cooldown including failed attempts. Customer views must never trigger a fleet collector or expose server-wide health. Transport failure, missing ACL/runtime evidence or unavailable task state must remain unknown/degraded, not fabricated successful zero. Those admission, UI and transport layers are not implemented yet.
+A Git pull changes source only. Review the identified commit/release, run tests, build both ZIPs, verify manifests and install the native Plesk ZIP plus the separately named WHMCS addon. Quiesce admitted work before replacement. Keep private configuration/data outside source; do not create routine backup copies of the repository.
 
-## Deployment, Updates And Removal
+The native extension's **Software updates** checks the fixed public repository's stable GitHub release; preview commits are not stable updater promotions. WHMCS addon upgrades run idempotent distinct-table migrations. Do not rely on a native version bump to deploy addon files. Rebuilding/reinstalling an identified previous commit is source rollback, not proof of compatible private data; review schemas and invalidate incompatible/foreign mappings before re-enabling.
 
-There is currently **nothing to activate or deploy for WHMCS**. The native Plesk extension still uses its separate reviewed ZIP and the Linux/Windows lifecycle instructions in the [operator tutorial](tutorial.md). The source-only WHMCS foundation is excluded from that ZIP and from installable tutorial artifacts. Pulling source is not a runtime installation or a stable-channel promotion.
+**Disconnect** is administrator-only, confirmed POST. It removes that server's approved service mappings and records a revocation tombstone under a database row lock. In-flight connections/approvals must not overwrite it. Review the server/installation change, reconnect and explicitly approve intended services again.
 
-Before an installable adapter: add native WHMCS activation/upgrade/uninstall migrations with distinct table names, current actor/role adapters, a bounded authenticated Plesk bridge, root/admin-only deployment with reviewed checksum/version gating and Linux/Windows lifecycle proof, cache revision invalidation, native client/admin pages and safe export/navigation. Preserve configuration/current data on upgrades; disable actions before removal and explicitly document any retained private data. No automatic remote installer or production deployment is authorized by these foundations.
+Disable the native bridge before removal:
 
-References: [WHMCS CurrentUser authentication](https://developers.whmcs.com/advanced/authentication), [WHMCS user permissions](https://developers.whmcs.com/api-reference/getpermissionslist), [Plesk extension API operator](https://docs.plesk.com/en-US/obsidian/api-rpc/about-xml-api/reference/managing-plesk-extensions.76730/).
+```sh
+plesk bin extension --exec help4-disk-usage bridge.php disable
+```
+
+```powershell
+plesk bin extension.exe --exec help4-disk-usage bridge.php disable
+```
+
+Disable Customer Reports, disconnect intended servers and deactivate the addon before removing its files. Deactivation retains private `mod_help4_du_plesk_servers`, `mod_help4_du_plesk_bindings` and `mod_help4_du_plesk_limits` tables for reviewed reinstall/data retention. A database administrator may explicitly drop **only those three tables** after confirming the addon is deactivated, requests are quiesced and no retention is needed. No automatic purge is provided. Native uninstall refuses active scanners, live reservations and in-flight bridge calls, disables the bridge and removes only its owned scheduler. Verify native private-data removal on both OSes; do not assume the installer removed every retained file.
+
+## Acceptance Before Stable 1.0
+
+Use licensed native Linux and supported Windows Server Plesk plus the intended WHMCS version. Prove API-RPC administrator identity, API-key/password TLS authentication and true private storage; native task completion, concurrency/caps and upgrade/uninstall; unrelated clients/users/resellers/limited users, suspended/transferred/recreated subscriptions, changed home/owner/server/pin and role revocation during IO. Prove native MySQL serialization of Connect/Approve/Disconnect, CSRF errors, exports, authenticated File Manager destinations, native page layout, desktop/mobile and five-minute idle behavior. Never expose live PII in tutorials.
+
+References: [WHMCS CurrentUser](https://developers.whmcs.com/advanced/authentication), [WHMCS addon admin output](https://developers.whmcs.com/addon-modules/admin-area-output), [Plesk extension API calls](https://docs.plesk.com/en-US/obsidian/api-rpc/about-xml-api/reference/managing-plesk-extensions/calling-extensions-operations.76740/).
 
 Built by [Help4 Network](https://help4network.com).

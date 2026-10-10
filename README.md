@@ -2,7 +2,7 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
-The separate `help4_disk_usage_plesk` WHMCS adapter now has source-only current-entitlement, bounded health and metadata/export/navigation foundations with Windows/Linux fixture coverage. It has no installable addon, live transport or native dashboard yet. See the [accurate WHMCS status and integration contract](docs/whmcs.md); do not use the cPanel addon as Plesk compatibility proof.
+The separate `help4_disk_usage_plesk` WHMCS addon now includes candidate customer reports/exports, native File Manager navigation, current-entitlement mappings, a paginated admin extension-health view and an opt-in verified-TLS Plesk bridge. It has a separate installable ZIP. [Installation and acceptance](docs/whmcs.md) remain gated on licensed native WHMCS/Plesk validation; the cPanel addon is not Plesk compatibility proof.
 
 **0.3.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md) and the [Linux/Windows target matrix](docs/platform-support.md). Automated CI is not Plesk certification.
 
@@ -46,7 +46,14 @@ php tests/scheduler.php
 php tests/runtime.php
 php tests/process.php
 php tests/lint.php
+php tests/permissions.php
+php tests/whmcs_scope.php
+php tests/whmcs_report.php
+php tests/whmcs_transport.php
+php tests/whmcs_native.php
+php tests/lifecycle.php
 python3 scripts/package.py
+python3 scripts/package_whmcs.py
 ```
 
 Windows: use `py -3` instead of `python3`. Packaging is cross-platform, without Bash. CI runs actual native Windows junction/handle tests separately from Linux descriptor tests.
@@ -57,13 +64,13 @@ Verify `dist/SHA256SUMS`, then upload the built ZIP through **Extensions > My Ex
 
 ```sh
 # Linux root
-plesk bin extension --install /absolute/path/help4-disk-usage-0.3.0-1.zip
+plesk bin extension --install /absolute/path/help4-disk-usage-0.3.0-2.zip
 ```
 
 ```powershell
 # Windows elevated PowerShell
-Get-FileHash 'C:\Lab\help4-disk-usage-0.3.0-1.zip' -Algorithm SHA256
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.3.0-1.zip'
+Get-FileHash 'C:\Lab\help4-disk-usage-0.3.0-2.zip' -Algorithm SHA256
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-0.3.0-2.zip'
 ```
 
 Open **Disk Usage Audit** from native Plesk navigation. **Scan settings** selects the real Python executable and policy. Create synthetic unrelated customers/resellers first and follow [native validation](docs/validation.md). Click **Refresh scan**, then **Check status**. The scan runs in a background task; the customer page never auto-submits or refreshes itself.
@@ -82,7 +89,7 @@ Queue reservations expire after enough time for the configured queue to drain at
 
 Run `plesk bin extension --exec help4-disk-usage doctor.php` on Linux, or `plesk bin extension.exe --exec help4-disk-usage doctor.php` on Windows, after configuring Python. This checks runtime capabilities without inspecting subscription contents; it does not certify storage ACLs or native panel behavior.
 
-Windows also includes an operator-run, read-only ACL preflight: `plesk bin extension.exe --exec help4-disk-usage permissions.php`. It fails on exposed private files, foreign-writable selected code/runtime paths, unsafe/reparse paths, unsupported ACLs or bounds. It makes no permission changes and reports native validation/continuous enforcement as false. Read the [Windows ACL runbook](docs/windows-acl.md) for exact scope, trusted identities, dependency gaps and the separate native hosting-user tests. It is not automatic enforcement in customer requests.
+Windows includes a read-only ACL preflight: `plesk bin extension.exe --exec help4-disk-usage permissions.php`. The same bounded check runs before saving the selected executable, worker execution and enabling the optional WHMCS bridge. It fails on exposed private files, foreign-writable selected code/runtime paths, unsafe/reparse paths, unsupported ACLs or bounds. It changes no permissions and does not certify dependencies or continuous enforcement. See the [Windows ACL runbook](docs/windows-acl.md) for exact scope, trusted identities and native hosting-user gates.
 
 ## Upgrade, Rollback And Uninstall
 
@@ -90,7 +97,7 @@ The administrator **Software updates** page checks only the fixed repository's l
 
 Pull Git changes, review `extension/CHANGES.md`, rerun tests/build, verify checksums, and reinstall the built ZIP with the same native command. **A git pull alone is not a deployed upgrade.** Policy/cache live outside source. Finish/cancel pending tasks before upgrades; older reservations without a policy binding fail closed. No automatic download-and-execute pipeline or snapshot job exists. Roll back by rebuilding/reinstalling an identified prior Git tag/commit; invalidate incompatible cache schemas and never reuse a foreign-owner report.
 
-Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `plesk bin extension.exe --uninstall help4-disk-usage`. Finish/cancel queued scans first; native uninstall task/data handling must pass both OS gates before stable release.
+Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `plesk bin extension.exe --uninstall help4-disk-usage`. Finish/cancel queued scans and in-flight bridge calls first. The guard disables the bridge and removes only its owned scheduler; native private-data handling must pass both OS gates before stable release. WHMCS deactivation retains private tables as documented in its separate runbook.
 
 ## WHMCS And Public Review
 

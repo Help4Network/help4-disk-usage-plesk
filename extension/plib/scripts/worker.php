@@ -9,8 +9,8 @@ $token = $argv[2] ?? '';
 if (!preg_match('/^[1-9][0-9]{0,9}$/D', $id) || !preg_match('/^[a-f0-9]{32}$/D', $token)) {
     exit(2);
 }
-$lock = fopen(Modules_Help4DiskUsage_Store::directory() . DIRECTORY_SEPARATOR . 'scanner.lock', 'c');
-if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
+$lock = Modules_Help4DiskUsage_Store::mutex('scanner.lock');
+if (!$lock) {
     exit(3);
 }
 try {
@@ -28,6 +28,7 @@ try {
     if (!is_file($python)) {
         throw new RuntimeException('Python runtime not configured');
     }
+    if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check(); }
     Modules_Help4DiskUsage_Runtime::check($python);
     $command = [$python, '-I', '-S', pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'scan.py',
         '--root', $domain->getHomePath(), '--seconds', (string)min(120, max(5, (int)$pending['seconds']))];

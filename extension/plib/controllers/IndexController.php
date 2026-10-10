@@ -133,6 +133,7 @@ class IndexController extends pm_Controller_Action
                 $data['overrides'] = json_decode($data['overrides_json'] ?? '{}', true, 16, JSON_THROW_ON_ERROR);
                 $data['profiles'] = json_decode($data['profiles_json'] ?? '{}', true, 16, JSON_THROW_ON_ERROR);
                 $policy = Modules_Help4DiskUsage_Store::validatePolicy($data);
+                if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check($policy['python']); }
                 Modules_Help4DiskUsage_Runtime::check($policy['python']);
                 Modules_Help4DiskUsage_Store::locked(function () use ($policy) {
                     Modules_Help4DiskUsage_Store::write('policy', $policy);

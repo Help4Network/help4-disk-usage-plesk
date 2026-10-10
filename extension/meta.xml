@@ -4,7 +4,7 @@
   <name>Disk Usage Audit</name>
   <description>Subscription-scoped file and filesystem-entry audits.</description>
   <version>0.3.0</version>
-  <release>1</release>
+  <release>2</release>
   <vendor>Help4 Network</vendor>
   <url>https://github.com/Help4Network/help4-disk-usage-plesk</url>
   <help_url>https://github.com/Help4Network/help4-disk-usage-plesk/blob/main/README.md</help_url>

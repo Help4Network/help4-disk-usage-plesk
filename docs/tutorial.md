@@ -22,7 +22,7 @@ php tests/lint.php
 python3 scripts/package.py
 (cd dist && sha256sum -c SHA256SUMS)
 # Run the native installer as root, using the actual absolute path.
-plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.3.0-1.zip
+plesk bin extension --install /absolute/path/dist/help4-disk-usage-0.3.0-2.zip
 ```
 
 ```powershell
@@ -40,9 +40,9 @@ php tests/process.php
 php tests/lint.php
 py -3 scripts/package.py
 Get-Content .\dist\SHA256SUMS
-Get-FileHash .\dist\help4-disk-usage-0.3.0-1.zip -Algorithm SHA256
+Get-FileHash .\dist\help4-disk-usage-0.3.0-2.zip -Algorithm SHA256
 # Compare the digest, then use the actual absolute path.
-plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.3.0-1.zip'
+plesk bin extension.exe --install 'C:\Lab\help4-disk-usage-plesk\dist\help4-disk-usage-0.3.0-2.zip'
 ```
 
 An extension upload may also be available under **Extensions > My Extensions > Upload Extension**. Use the native extension installer; do not copy extension files into a public subscription home. Verify Windows ACLs independently: hosting users must not read private report/state files or modify Python/the collector. Do not replace those checks with chmod or broad Everyone permissions.

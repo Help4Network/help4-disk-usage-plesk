@@ -17,6 +17,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests -v
       - run: python scripts/package.py
+      - run: python scripts/package_whmcs.py
   php:
     strategy:
       fail-fast: false
@@ -29,6 +30,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: dom, curl, pdo_sqlite
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -43,6 +45,9 @@ jobs:
       - run: php tests/permissions.php
       - run: php tests/whmcs_scope.php
       - run: php tests/whmcs_report.php
+      - run: php tests/whmcs_transport.php
+      - run: php tests/whmcs_native.php
+      - run: php tests/lifecycle.php
 
   windows-acl:
     name: Windows ACL preflight (${{ matrix.shell }})
@@ -105,6 +110,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: dom, curl, pdo_sqlite
       - name: Portable collector and unsupported-native-runtime fixtures
         run: python -m unittest discover -s tests -v
       - name: PHP control, entitlement and report regressions
@@ -120,5 +126,10 @@ jobs:
           php tests/permissions.php
           php tests/whmcs_scope.php
           php tests/whmcs_report.php
+          php tests/whmcs_transport.php
+          php tests/whmcs_native.php
+          php tests/lifecycle.php
       - name: Build portable preview artifact
-        run: python scripts/package.py
+        run: |
+          python scripts/package.py
+          python scripts/package_whmcs.py

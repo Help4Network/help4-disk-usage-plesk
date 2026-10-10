@@ -1,6 +1,6 @@
 # Windows ACL Preflight And Release Gate
 
-Available in the 0.3.0 preview as an **operator-run, read-only diagnostic**, not an installer permission repair or a stable-release approval. It does not enable customer scans, change ACLs, create accounts, change services or read report/file contents. There is no browser endpoint for it.
+Available in the 0.3.0-2 preview as a **read-only diagnostic and fail-closed preflight**, not an installer permission repair or a stable-release approval. The bounded native wrapper runs before saving a selected Python executable, before Windows worker/runtime execution, and before enabling the optional WHMCS bridge. The command remains available for operator inspection. It does not change ACLs, create accounts, change services or read report/file contents. No unauthenticated diagnostic browser endpoint exists.
 
 Verify the reviewed package SHA-256 and installed source first. A diagnostic cannot establish the trustworthiness of the code executing it. Use an isolated, licensed Windows Server Plesk lab, keep scheduled refresh disabled and preserve the native release gates.
 
@@ -57,7 +57,7 @@ Unsupported or complex ACLs, missing metadata, foreign owners and object/time li
 
 ## What Still Needs Native Proof
 
-This metadata snapshot does not pin handles, prevent ACL/path changes afterward, continuously enforce permissions, verify all executable dependencies or enumerate every customer's effective token. It is intentionally not wired into customer report/refresh requests. Quiesce changes during administrator inspection and retain the collector's separate handle-based protections.
+This metadata snapshot does not pin handles, prevent ACL/path changes afterward, continuously enforce permissions, verify all executable dependencies or enumerate every customer's effective token. It is not rerun on every customer report render; queued Windows workers fail before runtime execution when the preflight fails. Quiesce permission changes during administrator inspection and retain the collector's separate handle-based protections.
 
 Before a shared-hosting release, test actual Plesk installation/upgrade/uninstall and both application-pool/task identities. From unrelated hosting-user identities, prove denied reads of every private report/state file and denied writes/replacement of source, Python and dependencies. Repeat after native upgrade, inheritance changes and account transfer. Prove authorized panel/task access still works, including scheduling and native File Manager navigation. Windows GitHub runner NTFS tests are not these licensed Plesk tests.
 
