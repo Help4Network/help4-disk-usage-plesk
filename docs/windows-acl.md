@@ -1,6 +1,6 @@
 # Windows ACL Preflight And Release Gate
 
-Available in the 0.3.0-2 preview as a **read-only diagnostic and fail-closed preflight**, not an installer permission repair or a stable-release approval. The bounded native wrapper runs before saving a selected Python executable, before Windows worker/runtime execution, and before enabling the optional WHMCS bridge. The command remains available for operator inspection. It does not change ACLs, create accounts, change services or read report/file contents. No unauthenticated diagnostic browser endpoint exists.
+Available in the 0.3.0-2 preview as a **read-only diagnostic and fail-closed preflight**, not an installer permission repair or a stable-release approval. The bounded native wrapper runs before saving a selected Python executable, before Windows worker/runtime execution, before the administrator `doctor.php` runtime diagnostic and before enabling the optional WHMCS bridge. The command remains available for operator inspection. It does not change ACLs, create accounts, change services or read report/file contents. No unauthenticated diagnostic browser endpoint exists.
 
 Verify the reviewed package SHA-256 and installed source first. A diagnostic cannot establish the trustworthiness of the code executing it. Use an isolated, licensed Windows Server Plesk lab, keep scheduled refresh disabled and preserve the native release gates.
 

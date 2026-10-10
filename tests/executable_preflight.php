@@ -43,7 +43,14 @@ namespace ExecutableFixture {
     }
     class Modules_Help4DiskUsage_Runtime {
         public static $called = [];
-        public static function check($python) { self::$called[] = $python; return []; }
+        public static $diagnostic = false;
+        public static $fail = false;
+        public static function check($python) {
+            self::$called[] = $python;
+            if (self::$fail) { throw new \RuntimeException('Private runtime failure fixture'); }
+            return self::$diagnostic ? ['checked' => Modules_Help4DiskUsage_Permissions::$checked,
+                'runtime' => self::$called, 'policy_reads' => Modules_Help4DiskUsage_Store::$policies] : [];
+        }
     }
     class Modules_Help4DiskUsage_Process {
         public static $called = [];
@@ -60,6 +67,32 @@ namespace {
         $GLOBALS['checks']++;
     }
     $root = dirname(__DIR__) . '/extension/plib/';
+    if (($argv[1] ?? '') === '--doctor') {
+        $platform = $argv[2] ?? 'Windows';
+        $mode = $argv[3] ?? 'reject';
+        define('DiagnosticFixture\\PHP_OS_FAMILY', $platform);
+        foreach (['pm_Context', 'Modules_Help4DiskUsage_Store', 'Modules_Help4DiskUsage_Permissions',
+            'Modules_Help4DiskUsage_Runtime'] as $class) {
+            class_alias('ExecutableFixture\\' . $class, 'DiagnosticFixture\\' . $class);
+        }
+        \ExecutableFixture\Modules_Help4DiskUsage_Permissions::$allow = $mode !== 'reject';
+        \ExecutableFixture\Modules_Help4DiskUsage_Runtime::$diagnostic = true;
+        \ExecutableFixture\Modules_Help4DiskUsage_Runtime::$fail = $mode === 'runtime-failure';
+        $trace = $argv[4] ?? '';
+        // Rejections exit the script; retain invocation counts outside its response channel.
+        register_shutdown_function(function () use ($trace) {
+            try {
+                $result = ['checked' => \ExecutableFixture\Modules_Help4DiskUsage_Permissions::$checked,
+                    'runtime' => \ExecutableFixture\Modules_Help4DiskUsage_Runtime::$called,
+                    'policy_reads' => \ExecutableFixture\Modules_Help4DiskUsage_Store::$policies];
+                if (file_put_contents($trace, json_encode($result, JSON_THROW_ON_ERROR), LOCK_EX) === false) {
+                    throw new RuntimeException('Fixture trace unavailable');
+                }
+            } catch (Throwable $e) { fwrite(STDERR, "Fixture trace unavailable\n"); exit(70); }
+        });
+        eval('namespace DiagnosticFixture; use \\Throwable;' . substr(file_get_contents($root . 'scripts/doctor.php'), 5));
+        exit;
+    }
     if (($argv[1] ?? '') === '--worker') {
         \ExecutableFixture\Modules_Help4DiskUsage_Permissions::$allow = ($argv[2] ?? '') === 'allow';
         $argv = [__FILE__, '1', str_repeat('a', 32)];
@@ -76,6 +109,39 @@ namespace {
         check($result['runtime'] === ($mode === 'allow' ? [PHP_BINARY] : []), 'Worker runtime bypass');
         check($result['collector'] === ($mode === 'allow' ? [PHP_BINARY] : []), 'Worker collector bypass');
         check($result['completed'] === ($mode === 'allow'), 'Worker publication behavior');
+    }
+    if (($argv[1] ?? '') !== '--remote-only') {
+        foreach (['Windows' => ['reject' => 2, 'allow' => 0, 'runtime-failure' => 2],
+            'Linux' => ['reject' => 0, 'allow' => 0, 'runtime-failure' => 2]] as $platform => $modes) {
+            foreach ($modes as $mode => $expectedExit) {
+                $trace = tempnam(sys_get_temp_dir(), 'h4-doctor-');
+                if ($trace === false) { throw new RuntimeException('Fixture trace unavailable'); }
+                try {
+                    chmod($trace, 0600);
+                    $process = proc_open([PHP_BINARY, __FILE__, '--doctor', $platform, $mode, $trace],
+                        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+                    fclose($pipes[0]);
+                    $output = stream_get_contents($pipes[1]); fclose($pipes[1]);
+                    $error = stream_get_contents($pipes[2]); fclose($pipes[2]);
+                    check(proc_close($process) === $expectedExit, 'Doctor exit behavior: ' . $platform . '/' . $mode);
+                    $calls = json_decode(file_get_contents($trace), true, 8, JSON_THROW_ON_ERROR);
+                    check($calls['checked'] === ($platform === 'Windows' ? [PHP_BINARY] : []), 'Diagnostic traced ACL binding');
+                    check($calls['runtime'] === ($platform === 'Windows' && $mode === 'reject' ? [] : [PHP_BINARY]),
+                        'Diagnostic executed runtime after ACL rejection');
+                    check($calls['policy_reads'] === 1, 'Diagnostic traced policy binding');
+                } finally { unlink($trace); }
+                if ($expectedExit !== 0) {
+                    check($output === '', 'Failed diagnostic emitted runtime output');
+                    check($error === "Runtime diagnostic failed. Configure an administrator-owned Python 3.10+ executable with native filesystem APIs.\n",
+                        'Diagnostic failure was not generic');
+                } else {
+                    $result = json_decode($output, true, 8, JSON_THROW_ON_ERROR);
+                    check($error === '', 'Allowed diagnostic emitted an error');
+                    check($result['checked'] === ($platform === 'Windows' ? [PHP_BINARY] : []), 'Diagnostic ACL platform/binding');
+                    check($result['runtime'] === [PHP_BINARY] && $result['policy_reads'] === 1, 'Diagnostic captured runtime mismatch');
+                }
+            }
+        }
     }
     eval('namespace ExecutableFixture; use \\RuntimeException; use \\Throwable; use \\DirectoryIterator;' . substr(file_get_contents($root . 'library/Remote.php'), 5));
     foreach ([false, true] as $allowed) {
@@ -97,5 +163,5 @@ namespace {
             check(\ExecutableFixture\Modules_Help4DiskUsage_Runtime::$called === ($allowed ? [PHP_BINARY] : []), 'Remote executed before failed ACL check');
         }
     }
-    echo "Executable preflight: $checks worker/health/enable checks passed (simulated Windows control flow, not NTFS certification)\n";
+    echo "Executable preflight: $checks worker/doctor/health/enable checks passed (simulated control flow, not native panel or NTFS certification)\n";
 }
