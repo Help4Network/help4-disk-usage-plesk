@@ -1,6 +1,16 @@
 # Isolated Test Lab: Measured Status
 
-This records the historical 0.1.1 and 0.2.0 checkpoints and the 2026-10-09 0.3.0 update. This is bounded testing, not certification. Current source/CI must be checked independently of older evidence.
+This records historical checkpoints and the 2026-10-10 0.3.0-2 candidate. This is bounded testing, not certification. Check source, artifact hashes and CI for the exact candidate, not just its version number.
+
+## 0.3.0-2 Native SDK And WHMCS Candidate: 2026-10-10
+
+The existing isolated Plesk 18.0.81.2 / Ubuntu 24.04 AMD64-emulated container accepted the candidate at commit `1e68299db2c64260e2ee7315089dec49147afe13`. The installer again warned that it could not connect to the Plesk task manager. The installed API hook loaded against the actual `pm_Hook_ApiRpc` parent with the required untyped argument; its private RPC lock was mode `0600`. Runtime diagnostics passed on Python 3.12.3, the bridge remained disabled, and native API authentication, background execution, panel roles and private-storage validation remained unproved. Temporary diagnostic scripts were removed after the checks. No EULA was accepted, license bypassed or production server changed.
+
+The separately installable WHMCS addon candidate has lifecycle, current-entitlement, exact-mapping, bounded transport/health, report/export and File Manager route fixtures. Its actual PHP views were rendered with synthetic data at 1440px and 390px. Search, pagination, mapping controls and loaded logo assets passed; neither viewport had page-wide overflow or console errors. These were template fixtures, not authenticated WHMCS framework, MySQL locking, native TLS or Plesk File Manager destination tests.
+
+Independent candidate review found two conditional Windows executable/preflight ordering defects. Follow-up source binds each ACL check to the exact captured executable and prevents health diagnostics from executing it after an ACL rejection. The actual-source-body simulated Windows regression fails against the preceding worker and health implementations and passes 22 rejection/legitimate-control checks against the corrections. This is control-flow evidence, not a native NTFS effective-access result or closure of the preceding sealed security report. Check the final candidate's source/CI independently; artifacts rebuilt after these corrections differ from the earlier installation even though both are preview 0.3.0-2.
+
+Fifteen local PHP suites and 22 portable Python tests passed after the corrections, with seven Python platform/filesystem skips on macOS. Windows CI executes the Windows-only collector and ACL cases; macOS skips cannot stand in for those results. The full-systemd, licensed Linux and Windows Server installation/GUI/task/ACL/lifecycle matrix and native WHMCS acceptance runbook remain stable-release gates. The public kit remains a preview, not the final 1.0.0 launch package.
 
 ## 0.3.0 Native Linux Package Update: 2026-10-09
 

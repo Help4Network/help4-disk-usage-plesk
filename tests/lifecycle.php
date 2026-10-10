@@ -42,7 +42,7 @@ try {
         }
     }
     $worker = file_get_contents(__DIR__ . '/../extension/plib/scripts/worker.php');
-    check(strpos($worker, 'Permissions::check()') < strpos($worker, 'Runtime::check($python)'), 'Worker executes candidate before Windows preflight');
+    check(strpos($worker, 'Permissions::check($python)') < strpos($worker, 'Runtime::check($python)'), 'Worker executes candidate before bound Windows preflight');
     echo "Lifecycle scanner/RPC/pending guards, private locks and preflight ordering passed (SDK fixtures)\n";
 } finally {
     $dir = Modules_Help4DiskUsage_Store::directory();

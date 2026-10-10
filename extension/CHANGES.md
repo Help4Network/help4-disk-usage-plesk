@@ -1,5 +1,6 @@
 # 0.3.0-2 Development Preview
 
+- Independent candidate review found two conditional Windows runtime/preflight defects. Bind worker/bridge/health ACL checks to the exact captured executable and deny health runtime execution when its ACL check fails. Add actual-source-body simulated Windows rejection/legitimate-control regressions; native Windows effective-access proof remains open.
 - Complete the separately installable Plesk WHMCS addon candidate: native lifecycle/migrations, current User/Client/product and admin-role checks, exact administrator-approved service/subscription/owner/install mappings, customer report/export/File Manager routes and a bounded paginated extension-health view. Deployment remains a reviewed manual native install, not a remote installer.
 - Add an opt-in native Plesk XML API bridge and verified-TLS transport with nonce/pin/current-identity checks, finite byte/deadline/rate limits and one in-flight request. Missing API administrator identity fails closed; licensed native authentication/task proof is still required.
 - Serialize mapping pin commits and disconnect tombstones; repeat current entitlement around IO. Transfers, changed endpoints/pins, permissions, suspended/foreign services and masquerading deny without foreign identities.

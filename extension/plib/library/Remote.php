@@ -7,8 +7,9 @@ class Modules_Help4DiskUsage_Remote
     public static function configure($enabled)
     {
         if ($enabled) {
-            if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check(); }
-            Modules_Help4DiskUsage_Runtime::check(Modules_Help4DiskUsage_Store::policy()['python']);
+            $python = Modules_Help4DiskUsage_Store::policy()['python'];
+            if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check($python); }
+            Modules_Help4DiskUsage_Runtime::check($python);
         }
         return Modules_Help4DiskUsage_Store::locked(function () use ($enabled) {
             $config = Modules_Help4DiskUsage_Store::read('bridge');
@@ -161,21 +162,26 @@ class Modules_Help4DiskUsage_Remote
         $lock = Modules_Help4DiskUsage_Store::mutex('scanner.lock');
         $idle = $lock !== null;
         if ($lock) { flock($lock, LOCK_UN); fclose($lock); }
+        $python = Modules_Help4DiskUsage_Store::policy()['python'];
+        $storage = self::storage($python);
         $runtime = false;
-        try { Modules_Help4DiskUsage_Runtime::check(Modules_Help4DiskUsage_Store::policy()['python']); $runtime = true; }
+        try {
+            if (PHP_OS_FAMILY === 'Windows' && !$storage) { throw new RuntimeException('Windows preflight failed'); }
+            Modules_Help4DiskUsage_Runtime::check($python); $runtime = true;
+        }
         catch (Throwable $e) { }
         // Missing history or native storage evidence must not become healthy-zero status.
         return ['collection_ok' => isset($summary['failed_scans']) && count($pending) <= 32,
             'version' => pm_Extension::getById('help4-disk-usage')->getVersion(),
-            'runtime_ok' => $runtime, 'storage_ok' => self::storage(), 'pending' => count($pending),
+            'runtime_ok' => $runtime, 'storage_ok' => $storage, 'pending' => count($pending),
             'active_scanners' => $idle ? 0 : 1, 'failed_scans' => $summary['failed_scans'] ?? null,
             'last_success_at' => $summary['last_success_at'] ?? null];
     }
 
-    private static function storage()
+    private static function storage($python)
     {
         try {
-            if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check(); return true; }
+            if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check($python); return true; }
             if (!function_exists('posix_getpwnam')) { return false; }
             $panel = posix_getpwnam('psaadm');
             if (!$panel) { return false; }

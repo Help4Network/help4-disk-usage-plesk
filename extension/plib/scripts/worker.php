@@ -28,7 +28,7 @@ try {
     if (!is_file($python)) {
         throw new RuntimeException('Python runtime not configured');
     }
-    if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check(); }
+    if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check($python); }
     Modules_Help4DiskUsage_Runtime::check($python);
     $command = [$python, '-I', '-S', pm_Context::getPlibDir() . 'collector' . DIRECTORY_SEPARATOR . 'scan.py',
         '--root', $domain->getHomePath(), '--seconds', (string)min(120, max(5, (int)$pending['seconds']))];
