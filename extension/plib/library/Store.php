@@ -57,23 +57,31 @@ class Modules_Help4DiskUsage_Store
 
     public static function locked($callback)
     {
-        $handle = fopen(self::directory() . DIRECTORY_SEPARATOR . 'state.lock', 'c');
-        if (!$handle || !flock($handle, LOCK_EX)) {
-            throw new RuntimeException('Audit queue unavailable');
-        }
-        if (PHP_OS_FAMILY !== 'Windows' && function_exists('posix_geteuid') && posix_geteuid() === 0) {
-            $path = self::directory() . DIRECTORY_SEPARATOR . 'state.lock';
-            if (!chown($path, fileowner(self::directory())) || !chgrp($path, filegroup(self::directory())) || !chmod($path, 0600)) {
-                flock($handle, LOCK_UN);
-                fclose($handle);
-                throw new RuntimeException('Queue lock ownership unavailable');
-            }
-        }
-        if (PHP_OS_FAMILY !== 'Windows' && !chmod(self::directory() . DIRECTORY_SEPARATOR . 'state.lock', 0600)) {
-            flock($handle, LOCK_UN); fclose($handle);
-            throw new RuntimeException('Queue lock permissions unavailable');
-        }
+        $dir = self::directory();
+        $path = $dir . DIRECTORY_SEPARATOR . 'state.lock';
+        if (is_link($path)) { throw new RuntimeException('Audit queue unavailable'); }
+        $handle = fopen($path, 'c');
+        if (!$handle) { throw new RuntimeException('Audit queue unavailable'); }
         try {
+            // Queue/RPC/lifecycle requests must not wait indefinitely behind another writer.
+            $deadline = hrtime(true) + 2000000000;
+            while (true) {
+                if (hrtime(true) >= $deadline) { throw new RuntimeException('Audit queue busy; retry later'); }
+                $wouldBlock = 0;
+                if (flock($handle, LOCK_EX | LOCK_NB, $wouldBlock)) {
+                    if (hrtime(true) >= $deadline) { throw new RuntimeException('Audit queue busy; retry later'); }
+                    break;
+                }
+                if (!$wouldBlock) { throw new RuntimeException('Audit queue unavailable'); }
+                usleep(25000);
+            }
+            if (PHP_OS_FAMILY !== 'Windows') {
+                if (function_exists('posix_geteuid') && posix_geteuid() === 0 &&
+                    (!chown($path, fileowner($dir)) || !chgrp($path, filegroup($dir)))) {
+                    throw new RuntimeException('Queue lock ownership unavailable');
+                }
+                if (!chmod($path, 0600)) { throw new RuntimeException('Queue lock permissions unavailable'); }
+            }
             return $callback();
         } finally {
             flock($handle, LOCK_UN);

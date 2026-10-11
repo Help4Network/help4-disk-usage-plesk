@@ -49,6 +49,7 @@ jobs:
       - run: php tests/whmcs_native.php
       - run: php tests/lifecycle.php
       - run: php tests/executable_preflight.php
+      - run: php tests/queue_lock.php
 
   windows-acl:
     name: Windows ACL preflight (${{ matrix.shell }})
@@ -131,6 +132,7 @@ jobs:
           php tests/whmcs_native.php
           php tests/lifecycle.php
           php tests/executable_preflight.php
+          php tests/queue_lock.php
       - name: Build portable preview artifact
         run: |
           python scripts/package.py
