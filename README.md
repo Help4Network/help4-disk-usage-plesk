@@ -2,6 +2,10 @@
 
 Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsidian on Linux and Windows**. A separate native extension, not a renamed [cPanel installer](https://github.com/Help4Network/help4-disk-usage).
 
+**Free to use and deploy, including the Help4 WHMCS addon.** No Help4 license key, activation service, subscription, per-server fee or paid feature tier is required. Hosts and vendors may customize the surrounding branding and redistribute the software while retaining the small linked **Built by [Help4 Network](https://help4network.com/)** byline at the bottom of pages and reports and the included copyright/permission notice.
+
+The repository's `LICENSE` records redistribution permission and attribution; it is not a paid activation requirement. Plesk, WHMCS and Windows Server platform licenses and terms are separate from this free extension. References to licensed native validation mean testing inside those vendor platforms, not activating Help4 Disk Usage. Free availability does not change the preview validation and release gates described below.
+
 The separate `help4_disk_usage_plesk` WHMCS addon now includes candidate customer reports/exports, native File Manager navigation, current-entitlement mappings, a paginated admin extension-health view and an opt-in verified-TLS Plesk bridge. It has a separate installable ZIP. [Installation and acceptance](docs/whmcs.md) remain gated on licensed native WHMCS/Plesk validation; the cPanel addon is not Plesk compatibility proof.
 
 **0.3.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md) and the [Linux/Windows target matrix](docs/platform-support.md). Automated CI is not Plesk certification.
