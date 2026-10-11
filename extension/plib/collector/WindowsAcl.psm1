@@ -112,6 +112,8 @@ function Get-H4AclPreflight {
             }
         }
     }
+    # The final metadata operation can finish after the preceding cooperative check.
+    if ($state.Clock.Elapsed.TotalSeconds -ge $state.Seconds) { throw 'time_limit' }
     return [pscustomobject]@{ schema = 1; ok = $true; objects_checked = $state.Objects;
         scope = 'private flat storage and selected protected trees'; native_panel_validated = $false;
         continuous_enforcement = $false; built_by = 'https://help4network.com' }

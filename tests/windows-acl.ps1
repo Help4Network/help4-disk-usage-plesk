@@ -92,6 +92,32 @@ try {
     Check ($result.ok -and $result.objects_checked -gt 4 -and -not $result.native_panel_validated -and
         -not $result.continuous_enforcement) 'Native NTFS preflight snapshot'
     Check ((Get-Acl -LiteralPath $private).Sddl -eq $before) 'Preflight does not change permissions'
+    $fileResult = Get-H4AclPreflight $private @($program) $user
+    $exactObjects = $fileResult.objects_checked
+    function FinalMetadataClock([double]$Elapsed, [int]$Maximum, [int]$ExpectedInjections = 1) {
+        $injection = @{ Count = 0 }
+        try { & $module {
+            param($Private, $Program, $User, $Elapsed, $Maximum, $Injection)
+            $originalObject = (Get-Item Function:Assert-H4Object).ScriptBlock
+            function Assert-H4Object {
+                param([string]$Path, [string]$Role, [string[]]$Trusted, $State)
+                & $originalObject $Path $Role $Trusted $State
+                if ($Path -eq $Program -and $Role -eq 'protected') {
+                    # Replace only the clock after genuine final-object metadata inspection.
+                    $Injection.Count++
+                    $State.Clock = @{ Elapsed = @{ TotalSeconds = $Elapsed } }
+                }
+            }
+            Get-H4AclPreflight $Private @($Program) $User $Maximum 10
+        } $private $program $user $Elapsed $Maximum $injection
+        } finally { Check ($injection.Count -eq $ExpectedInjections) 'Final metadata clock injection count' }
+    }
+    $inTime = FinalMetadataClock 9.999 $exactObjects
+    Check ($inTime.ok -and $inTime.objects_checked -eq $exactObjects) 'Final metadata below deadline accepts exact object limit'
+    Fails { FinalMetadataClock 10 $exactObjects } 'time_limit'
+    Fails { FinalMetadataClock 10.001 $exactObjects } 'time_limit'
+    Fails { FinalMetadataClock 9.999 ($exactObjects - 1) 0 } 'object_limit'
+    Check ((Get-Acl -LiteralPath $private).Sddl -eq $before) 'Deadline controls do not change permissions'
     ForeignGrant $report 'Read'
     Fails { Get-H4AclPreflight $private @($code) $user } 'foreign_private_access'
     Secure $report $false

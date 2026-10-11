@@ -53,7 +53,7 @@ The default native command checks **Python's executable only**, not every DLL, s
 - Reject foreign write, delete, delete-child, write-DACL, write-owner, generic-write and generic-all grants on selected code/runtime objects. Read/execute grants alone are permitted there.
 - Check ancestor replacement/write permissions separately; inherit-only ancestor grants are checked where inherited on selected objects. Create-subdirectory permission alone on an ancestor is not treated as replacement of an existing protected child.
 
-Unsupported or complex ACLs, missing metadata, foreign owners and object/time limits are failures, not a healthy empty result. Diagnostic loop checks have a 10-second ceiling; the native PHP subprocess has a 12-second deadline and 16 KiB output cap. OS calls and cleanup can stall; neither bound is a certification against uninterruptible kernel calls. The standalone PowerShell command has cooperative checks, not the PHP parent's process deadline.
+Unsupported or complex ACLs, missing metadata, foreign owners and object/time limits are failures, not a healthy empty result. Diagnostic loop checks have a 10-second ceiling, rechecked before success even if the final metadata operation finishes late; the native PHP subprocess has a 12-second deadline and 16 KiB output cap. Finishing exactly at the elapsed deadline fails; inspecting exactly the permitted number of objects can pass when still within time. OS calls and cleanup can stall; neither bound is a certification against uninterruptible kernel calls. The standalone PowerShell command has cooperative checks, not the PHP parent's process deadline.
 
 ## What Still Needs Native Proof
 
