@@ -30,6 +30,7 @@ class Modules_Help4DiskUsage_Scheduler
 
     public static function run()
     {
+        $deadline = hrtime(true) + 10000000000;
         $claimed = Modules_Help4DiskUsage_Store::locked(function () {
             $policy = Modules_Help4DiskUsage_Store::policy();
             $previous = Modules_Help4DiskUsage_Store::read('rotation');
@@ -41,13 +42,13 @@ class Modules_Help4DiskUsage_Scheduler
         });
         if (!$claimed) { return ['queued' => 0, 'skipped' => 0, 'limited' => false]; }
         $policy = Modules_Help4DiskUsage_Store::policy();
-        $deadline = microtime(true) + 10;
         $candidates = [];
         $examined = 0;
         $skipped = 0;
-        $limited = false;
-        foreach (pm_Domain::getAllDomains(true) as $domain) {
-            if (++$examined > 10000 || microtime(true) > $deadline) { $limited = true; break; }
+        $limited = hrtime(true) >= $deadline;
+        $domains = $limited ? [] : pm_Domain::getAllDomains(true);
+        foreach ($domains as $domain) {
+            if (++$examined > 10000 || hrtime(true) >= $deadline) { $limited = true; break; }
             try {
                 $effective = Modules_Help4DiskUsage_Store::effective($domain);
                 if ($effective['hourly'] === 0) { $skipped++; continue; }
@@ -57,26 +58,47 @@ class Modules_Help4DiskUsage_Scheduler
                 $candidates[] = ['id' => $domain->getId(), 'at' => $at === false ? 0 : $at];
             } catch (Throwable $e) { $skipped++; }
         }
+        if (hrtime(true) >= $deadline) { $limited = true; }
         usort($candidates, function ($a, $b) { return ($a['at'] <=> $b['at']) ?: ($a['id'] <=> $b['id']); });
         $queued = 0;
         $attempted = 0;
         foreach ($candidates as $candidate) {
             if ($queued >= $policy['scheduled_batch'] || ++$attempted > $policy['scheduled_batch'] * 2 ||
-                microtime(true) > $deadline) { $limited = true; break; }
+                hrtime(true) >= $deadline) { $limited = true; break; }
             $token = null;
             try {
                 $domain = pm_Domain::getByDomainId((int)$candidate['id']);
                 $owner = $domain->getClient();
+                if (hrtime(true) >= $deadline) { $limited = true; break; }
                 $token = Modules_Help4DiskUsage_Store::reserve($domain, $owner, false, 'scheduled');
+                if (hrtime(true) >= $deadline) {
+                    $limited = true;
+                    Modules_Help4DiskUsage_Store::finish($candidate['id'], $token);
+                    break;
+                }
                 $task = new Modules_Help4DiskUsage_Task_Scan();
                 $task->setParams(['domain' => $domain->getId(), 'token' => $token]);
-                (new pm_LongTask_Manager())->start($task, $domain);
+                if (hrtime(true) >= $deadline) {
+                    $limited = true;
+                    Modules_Help4DiskUsage_Store::finish($candidate['id'], $token);
+                    break;
+                }
+                $manager = new pm_LongTask_Manager();
+                if (hrtime(true) >= $deadline) {
+                    $limited = true;
+                    Modules_Help4DiskUsage_Store::finish($candidate['id'], $token);
+                    break;
+                }
+                $manager->start($task, $domain);
                 $queued++;
+                // Plesk may already accept a task during a slow call; keep its live reservation.
+                if (hrtime(true) >= $deadline) { $limited = true; break; }
             } catch (Throwable $e) {
                 if ($token !== null) { Modules_Help4DiskUsage_Store::finish($candidate['id'], $token); }
                 $skipped++;
             }
         }
+        if (hrtime(true) >= $deadline) { $limited = true; }
         $summary = ['queued' => $queued, 'skipped' => $skipped, 'limited' => $limited];
         Modules_Help4DiskUsage_Store::locked(function () use ($summary) {
             $state = Modules_Help4DiskUsage_Store::read('rotation');
