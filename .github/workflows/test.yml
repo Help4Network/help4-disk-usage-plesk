@@ -51,6 +51,7 @@ jobs:
       - run: php tests/whmcs_health.php
       - run: php tests/whmcs_services.php
       - run: php tests/lifecycle.php
+      - run: php tests/lifecycle_processes.php
       - run: php tests/executable_preflight.php
       - run: php tests/queue_lock.php
 
@@ -137,6 +138,7 @@ jobs:
           php tests/whmcs_health.php
           php tests/whmcs_services.php
           php tests/lifecycle.php
+          php tests/lifecycle_processes.php
           php tests/executable_preflight.php
           php tests/queue_lock.php
       - name: Build portable preview artifact
