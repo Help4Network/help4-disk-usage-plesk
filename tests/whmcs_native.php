@@ -23,6 +23,7 @@ namespace WHMCS\Database {
     class Capsule {
         public static $pdo;
         public static $locks = 0;
+        public static $afterGet;
         public static function table($name) { return new Query($name); }
         public static function connection() { return new self(); }
         public static function schema() { return new Schema(); }
@@ -79,7 +80,10 @@ namespace WHMCS\Database {
         public function get() {
             $sql = 'SELECT ' . $this->columns . ' FROM ' . $this->table . implode('', $this->joins) . $this->clause() . $this->order;
             if ($this->limit !== null) { $sql .= ' LIMIT ' . $this->limit . ' OFFSET ' . $this->offset; }
-            $stmt = Capsule::$pdo->prepare($sql); $stmt->execute($this->values); return $stmt->fetchAll(\PDO::FETCH_OBJ);
+            $stmt = Capsule::$pdo->prepare($sql); $stmt->execute($this->values);
+            $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
+            if (Capsule::$afterGet) { (Capsule::$afterGet)($this->table); }
+            return $rows;
         }
         public function first() { $rows = $this->limit(1)->get(); return $rows[0] ?? null; }
         public function insertOrIgnore($data) { return $this->insert($data, true); }

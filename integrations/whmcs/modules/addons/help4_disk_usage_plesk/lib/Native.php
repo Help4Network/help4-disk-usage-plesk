@@ -269,19 +269,32 @@ final class Native
 
     public static function health($page = 1)
     {
-        self::admin();
+        $admin = self::admin();
         $page = max(1, min(10000, (int)$page));
         $servers = Capsule::table('tblservers')->where('type', 'plesk')->orderBy('id')
             ->offset(($page - 1) * 20)->limit(20)->get();
         $records = $observations = [];
         foreach ($servers as $server) {
-            $state = self::read(self::SERVERS, 'server_id', Scope::id($server->id));
-            $binding = isset($state['installation_id']) ? Transport::binding((array)$server, $state['installation_id']) : str_repeat('0', 64);
-            $records[] = ['id' => Scope::id($server->id), 'module' => 'plesk',
-                'enabled' => in_array($server->disabled, [0, '0'], true), 'server_binding' => $binding];
-            $observations[$server->id] = $state['observation'] ?? null;
+            $id = Scope::id($server->id);
+            $record = ['id' => $id, 'module' => 'plesk', 'enabled' => in_array($server->disabled, [0, '0'], true),
+                'server_binding' => str_repeat('0', 64), 'configuration_available' => true];
+            $observations[$id] = null;
+            try {
+                $state = self::read(self::SERVERS, 'server_id', $id);
+                Transport::endpoint((array)$server);
+                if (array_key_exists('installation_id', $state)) {
+                    $record['server_binding'] = Transport::binding((array)$server, $state['installation_id']);
+                    $observations[$id] = $state['observation'] ?? null;
+                }
+            } catch (\Throwable $e) {
+                // One unavailable configuration must not reveal details or hide neighboring servers.
+                $record['configuration_available'] = false;
+            }
+            $records[] = $record;
         }
-        return Health::page($records, $observations);
+        $health = Health::page($records, $observations);
+        if (self::admin() !== $admin) { throw new \RuntimeException('Administrator access required'); }
+        return $health;
     }
 
     private static function endpointSnapshot(array $server)

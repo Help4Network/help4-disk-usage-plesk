@@ -18,8 +18,9 @@ final class Health
             if (!is_array($server)) { throw new \RuntimeException('Invalid health batch'); }
             $id = Scope::id($server['id'] ?? null);
             $binding = $server['server_binding'] ?? null;
+            $available = array_key_exists('configuration_available', $server) ? $server['configuration_available'] : true;
             if (isset($seen[$id]) || ($server['module'] ?? null) !== 'plesk' ||
-                !is_bool($server['enabled'] ?? null) || !is_string($binding) ||
+                !is_bool($server['enabled'] ?? null) || !is_bool($available) || !is_string($binding) ||
                 !preg_match('/^[a-f0-9]{64}$/D', $binding)) { throw new \RuntimeException('Invalid health batch'); }
             $seen[$id] = true;
             $row = ['server_id' => $id, 'scope' => 'extension only', 'status' => 'unmeasured',
@@ -27,6 +28,8 @@ final class Health
                 'pending' => null, 'active_scanners' => null, 'failed_scans' => null, 'last_success_at' => null];
             if (!$server['enabled']) {
                 $row['status'] = 'disabled'; $row['reason'] = 'server_disabled';
+            } elseif (!$available) {
+                $row['status'] = 'unavailable'; $row['reason'] = 'configuration_unavailable';
             } else {
                 $raw = $observations[$id] ?? null;
                 if ($raw !== null) {
