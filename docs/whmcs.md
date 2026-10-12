@@ -19,6 +19,8 @@ php tests/whmcs_scope.php
 php tests/whmcs_report.php
 php tests/whmcs_transport.php
 php tests/whmcs_native.php
+php tests/whmcs_health.php
+php tests/whmcs_services.php
 php tests/lifecycle.php
 ```
 
@@ -50,6 +52,8 @@ plesk bin extension.exe --exec help4-disk-usage bridge.php status
 A fresh connection with no scan history is unknown/degraded, not a successful zero. Run the native subscription scan and confirm completion before expecting report/health evidence. A queued API response means admission, not completion.
 
 ## Reports And File Manager
+
+The customer service picker returns at most 50 active Plesk services for the currently selected Client Account, ordered by service ID, exposing only service IDs and escaped domain labels. It rechecks the same authenticated User, selected Client Account, Products/Manage Products permissions, enabled customer area and non-masquerading session after its database query before returning those rows. A changed account/user, revoked permission, logout or disabled customer access produces the generic unavailable page instead of the prior account's list. Listing performs no remote collection and does not consume scan/request quotas or change mappings. An empty current account remains empty; no neighboring account is substituted. This is not a continuous or atomic service-ownership snapshot; individual reports and actions still perform their own current scope checks.
 
 Views and exports reread the authenticated User, selected Client Account, current permissions, active service/product, enabled server and approved mapping before and after remote IO. Masquerading sessions are denied. Current native subscription identity is checked around report retrieval; cached ownership is not entitlement.
 

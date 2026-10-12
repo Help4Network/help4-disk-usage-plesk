@@ -307,9 +307,11 @@ final class Native
     {
         $actor = self::actor();
         if (!$actor['products_allowed'] || !$actor['manage_products_allowed']) { throw new \RuntimeException('Service unavailable'); }
-        return Capsule::table('tblhosting as h')->join('tblproducts as p', 'p.id', '=', 'h.packageid')
+        $services = Capsule::table('tblhosting as h')->join('tblproducts as p', 'p.id', '=', 'h.packageid')
             ->where('h.userid', $actor['client_id'])->where('h.domainstatus', 'Active')->where('p.servertype', 'plesk')
             ->orderBy('h.id')->limit(50)->select('h.id', 'h.domain')->get();
+        if (self::actor() !== $actor) { throw new \RuntimeException('Service unavailable'); }
+        return $services;
     }
 
     public static function jump($id, $path, $kind)

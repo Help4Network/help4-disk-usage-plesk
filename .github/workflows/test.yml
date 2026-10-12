@@ -49,6 +49,7 @@ jobs:
       - run: php tests/whmcs_transport.php
       - run: php tests/whmcs_native.php
       - run: php tests/whmcs_health.php
+      - run: php tests/whmcs_services.php
       - run: php tests/lifecycle.php
       - run: php tests/executable_preflight.php
       - run: php tests/queue_lock.php
@@ -134,6 +135,7 @@ jobs:
           php tests/whmcs_transport.php
           php tests/whmcs_native.php
           php tests/whmcs_health.php
+          php tests/whmcs_services.php
           php tests/lifecycle.php
           php tests/executable_preflight.php
           php tests/queue_lock.php
