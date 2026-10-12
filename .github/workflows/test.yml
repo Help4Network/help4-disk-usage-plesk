@@ -39,6 +39,7 @@ jobs:
       - run: php tests/policy.php
       - run: php tests/releases.php
       - run: php tests/controllers.php
+      - run: php tests/settings.php
       - run: php tests/scheduler.php
       - run: php tests/scheduler_deadline.php
       - run: php tests/runtime.php
@@ -126,6 +127,7 @@ jobs:
           php tests/policy.php
           php tests/releases.php
           php tests/controllers.php
+          php tests/settings.php
           php tests/scheduler.php
           php tests/scheduler_deadline.php
           php tests/runtime.php

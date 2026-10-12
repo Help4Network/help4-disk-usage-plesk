@@ -120,12 +120,27 @@ class IndexController extends pm_Controller_Action
         $this->_redirect($url);
     }
 
-    public function settingsAction()
+    private function settingsAdministrator($expected = null)
     {
-        if (!Modules_Help4DiskUsage_Access::admin()) {
+        try {
+            $client = pm_Session::getClient();
+            $id = $client->getId();
+            if ((!is_int($id) && !is_string($id)) || !preg_match('/^[0-9]{1,10}$/D', (string)$id) ||
+                !$client->isAdmin() || pm_Session::isImpersonated() || ($expected !== null && $id !== $expected)) {
+                throw new RuntimeException('Administrator access required');
+            }
+            return $id;
+        } catch (Throwable $e) {
+            unset($this->view->policy);
             throw new RuntimeException('Administrator access required');
         }
+    }
+
+    public function settingsAction()
+    {
+        $administrator = $this->settingsAdministrator();
         $this->view->policy = Modules_Help4DiskUsage_Store::policy();
+        $this->settingsAdministrator($administrator);
         if ($this->getRequest()->isPost()) {
             $this->post();
             try {
@@ -134,8 +149,10 @@ class IndexController extends pm_Controller_Action
                 $data['profiles'] = json_decode($data['profiles_json'] ?? '{}', true, 16, JSON_THROW_ON_ERROR);
                 $policy = Modules_Help4DiskUsage_Store::validatePolicy($data);
                 if (PHP_OS_FAMILY === 'Windows') { Modules_Help4DiskUsage_Permissions::check($policy['python']); }
+                $this->settingsAdministrator($administrator);
                 Modules_Help4DiskUsage_Runtime::check($policy['python']);
-                Modules_Help4DiskUsage_Store::locked(function () use ($policy) {
+                Modules_Help4DiskUsage_Store::locked(function () use ($policy, $administrator) {
+                    $this->settingsAdministrator($administrator);
                     Modules_Help4DiskUsage_Store::write('policy', $policy);
                 });
                 $this->_status->addMessage('info', 'Settings saved');
@@ -144,6 +161,7 @@ class IndexController extends pm_Controller_Action
                 $this->_status->addMessage('warning', 'Settings not saved. Check the limits, Python path and subscription overrides.');
             }
         }
+        $this->settingsAdministrator($administrator);
     }
 
     public function updatesAction()

@@ -19,6 +19,8 @@ class Zend_Session_Namespace {
 }
 class ControllerClient {
     public $admin = false;
+    public $id = 1;
+    public function getId() { return $this->id; }
     public function isAdmin() { return $this->admin; }
     public function hasAccessToDomain($id) { return $id === 1; }
 }
