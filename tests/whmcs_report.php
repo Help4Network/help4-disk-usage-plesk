@@ -30,14 +30,19 @@ $raw = fixture();
 $raw['binding'] = '/private/home'; $raw['credentials'] = 'not-for-export';
 $raw['built_by'] = ['url' => 'https://untrusted.example.test'];
 $raw['largest_files'][0] += ['contents' => 'not-for-export', 'url' => 'https://untrusted.example.test', 'owner' => 'not-for-export'];
-$clean = Report::normalize($raw);
+$now = time();
+$clean = Report::normalize($raw, $now);
 check($clean['complete'] && !$clean['stale'] && !$clean['totals_are_lower_bounds'], 'Complete/fresh coverage lost');
 check($clean['growth_bytes'] === -20, 'Comparable signed growth lost');
 check($clean['largest_files'][0]['hint'] === Report::HINTS['cache'], 'Remote hint trusted');
 check($clean['built_by'] === ['name' => 'Help4 Network', 'url' => 'https://help4network.com'], 'Credit/remote link trusted');
 check(!str_contains(Report::json($raw), 'not-for-export') && !str_contains(Report::json($raw), '/private/home') &&
     !str_contains(Report::json($raw), 'untrusted.example.test'), 'Unknown private metadata escaped');
-check(Report::normalize($clean) === $clean, 'Normalized report not idempotent');
+check(Report::normalize($clean, $now) === $clean, 'Normalized report not idempotent at the same instant');
+check(Report::normalize($clean, $now + 1)['age_seconds'] === $clean['age_seconds'] + 1, 'Report age did not advance');
+$scanned = strtotime($clean['scanned_at']);
+check(!Report::normalize($clean, $scanned + 3600)['stale'], 'Exact TTL boundary labelled stale');
+check(Report::normalize($clean, $scanned + 3601)['stale'], 'Expired report labelled fresh');
 foreach (array_keys(fixture()) as $field) {
     $bad = fixture(); unset($bad[$field]);
     denied(function () use ($bad) { Report::normalize($bad); });
