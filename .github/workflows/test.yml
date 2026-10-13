@@ -36,6 +36,7 @@ jobs:
           python-version: '3.13'
       - run: php tests/lint.php
       - run: php tests/security.php
+      - run: php tests/domain_viewer.php
       - run: php tests/policy.php
       - run: php tests/releases.php
       - run: php tests/controllers.php
@@ -125,6 +126,7 @@ jobs:
         run: |
           php tests/lint.php
           php tests/security.php
+          php tests/domain_viewer.php
           php tests/policy.php
           php tests/releases.php
           php tests/controllers.php

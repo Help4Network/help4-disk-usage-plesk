@@ -32,13 +32,35 @@ class Modules_Help4DiskUsage_Access
         }
     }
 
+    private static function domainViewer($expected = null)
+    {
+        try {
+            $client = pm_Session::getClient();
+            $viewer = ['id' => $client->getId(), 'admin' => $client->isAdmin(),
+                'impersonated' => pm_Session::isImpersonated()];
+            if ((!is_int($viewer['id']) && !is_string($viewer['id'])) ||
+                !preg_match('/^[0-9]{1,10}$/D', (string)$viewer['id']) ||
+                !is_bool($viewer['admin']) || !is_bool($viewer['impersonated']) ||
+                ($expected !== null && $viewer !== $expected)) {
+                throw new RuntimeException('Subscription unavailable');
+            }
+            return [$client, $viewer];
+        } catch (Throwable $e) {
+            throw new RuntimeException('Subscription unavailable');
+        }
+    }
+
     public static function domains()
     {
-        $client = pm_Session::getClient();
+        [$client, $viewer] = self::domainViewer();
         $all = pm_Domain::getAllDomains(true);
-        return array_values(array_filter($all, function ($d) use ($client) {
-            return self::admin() || $client->hasAccessToDomain($d->getId());
+        self::domainViewer($viewer);
+        $admin = $viewer['admin'] && !$viewer['impersonated'];
+        $domains = array_values(array_filter($all, function ($d) use ($client, $admin) {
+            return $admin || $client->hasAccessToDomain($d->getId());
         }));
+        self::domainViewer($viewer);
+        return $domains;
     }
 
     public static function binding($domain)
