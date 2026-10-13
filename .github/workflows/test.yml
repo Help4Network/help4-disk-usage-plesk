@@ -45,6 +45,7 @@ jobs:
       - run: php tests/runtime.php
       - run: php tests/process.php
       - run: php tests/permissions.php
+      - run: php tests/permissions_response.php
       - run: php tests/whmcs_scope.php
       - run: php tests/whmcs_report.php
       - run: php tests/whmcs_transport.php
@@ -133,6 +134,7 @@ jobs:
           php tests/runtime.php
           php tests/process.php
           php tests/permissions.php
+          php tests/permissions_response.php
           php tests/whmcs_scope.php
           php tests/whmcs_report.php
           php tests/whmcs_transport.php
