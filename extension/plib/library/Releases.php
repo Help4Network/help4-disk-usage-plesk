@@ -45,11 +45,26 @@ class Modules_Help4DiskUsage_Releases
         }
     }
 
+    private static function administrator($expected = null)
+    {
+        try {
+            $viewer = Modules_Help4DiskUsage_Access::viewer($expected);
+            if (!$viewer['admin'] || $viewer['impersonated']) {
+                throw new RuntimeException('Administrator access required');
+            }
+            return $viewer;
+        } catch (Throwable $e) {
+            throw new RuntimeException('Administrator access required');
+        }
+    }
+
     public static function check($fetch = null)
     {
-        if (!Modules_Help4DiskUsage_Access::admin()) { throw new RuntimeException('Administrator access required'); }
-        Modules_Help4DiskUsage_Store::locked(function () {
+        $administrator = self::administrator();
+        Modules_Help4DiskUsage_Store::locked(function () use ($administrator) {
+            self::administrator($administrator);
             $cache = Modules_Help4DiskUsage_Store::read('release');
+            self::administrator($administrator);
             if (($cache['attempted_at'] ?? 0) > time() - 300) {
                 throw new RuntimeException('Wait five minutes before checking again');
             }
@@ -57,8 +72,10 @@ class Modules_Help4DiskUsage_Releases
             Modules_Help4DiskUsage_Store::write('release', $cache);
         });
         try {
+            self::administrator($administrator);
             // A test transport may be supplied by PHP callers, never by HTTP input.
             $response = $fetch ? $fetch() : self::fetch();
+            self::administrator($administrator);
             if ($response['status'] === 404) {
                 $release = ['state' => 'no_release'];
             } elseif ($response['status'] === 200) {
@@ -66,27 +83,36 @@ class Modules_Help4DiskUsage_Releases
             } else {
                 throw new RuntimeException('Release service unavailable');
             }
-            Modules_Help4DiskUsage_Store::locked(function () use ($release) {
+            Modules_Help4DiskUsage_Store::locked(function () use ($release, $administrator) {
+                self::administrator($administrator);
                 $cache = Modules_Help4DiskUsage_Store::read('release');
+                self::administrator($administrator);
                 $cache['result'] = $release;
                 $cache['checked_at'] = gmdate('c');
                 unset($cache['failed_at']);
                 Modules_Help4DiskUsage_Store::write('release', $cache);
             });
+            self::administrator($administrator);
             return $release;
         } catch (Throwable $e) {
-            Modules_Help4DiskUsage_Store::locked(function () {
+            self::administrator($administrator);
+            Modules_Help4DiskUsage_Store::locked(function () use ($administrator) {
+                self::administrator($administrator);
                 $cache = Modules_Help4DiskUsage_Store::read('release');
+                self::administrator($administrator);
                 $cache['failed_at'] = gmdate('c');
                 Modules_Help4DiskUsage_Store::write('release', $cache);
             });
+            self::administrator($administrator);
             throw new RuntimeException('Release check unavailable; previous result may be stale');
         }
     }
 
     public static function cached()
     {
-        if (!Modules_Help4DiskUsage_Access::admin()) { throw new RuntimeException('Administrator access required'); }
-        return Modules_Help4DiskUsage_Store::read('release');
+        $administrator = self::administrator();
+        $cache = Modules_Help4DiskUsage_Store::read('release');
+        self::administrator($administrator);
+        return $cache;
     }
 }

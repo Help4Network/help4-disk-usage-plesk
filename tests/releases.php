@@ -8,7 +8,11 @@ class pm_Context {
     public static $directory;
     public static function getVarDir() { return self::$directory; }
 }
-class ReleaseClient { public $admin = true; public function isAdmin() { return $this->admin; } }
+class ReleaseClient {
+    public $admin = true, $id = 1;
+    public function isAdmin() { return $this->admin; }
+    public function getId() { return $this->id; }
+}
 class pm_Session {
     public static $client;
     public static $impersonated = false;

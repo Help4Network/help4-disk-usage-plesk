@@ -45,6 +45,7 @@ python3 -m unittest discover -s tests -v
 php tests/security.php
 php tests/policy.php
 php tests/releases.php
+php tests/release_authorization.php
 php tests/controllers.php
 php tests/index_viewer.php
 php tests/scheduler.php
