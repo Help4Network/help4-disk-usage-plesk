@@ -50,6 +50,11 @@ class Modules_Help4DiskUsage_Access
         }
     }
 
+    public static function viewer($expected = null)
+    {
+        return self::domainViewer($expected)[1];
+    }
+
     public static function domains()
     {
         [$client, $viewer] = self::domainViewer();

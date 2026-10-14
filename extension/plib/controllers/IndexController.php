@@ -31,28 +31,40 @@ class IndexController extends pm_Controller_Action
 
     public function indexAction()
     {
-        $domains = Modules_Help4DiskUsage_Access::domains();
-        $this->view->domains = $domains;
-        $this->view->admin = Modules_Help4DiskUsage_Access::admin();
-        $this->view->report = null;
-        $this->view->domain = null;
-        $this->view->scanStatus = null;
-        $this->view->notice = $this->getParam('queued') === '1' ? 'Scan queued. Your previous report remains available.' : '';
-        if (!$domains) {
-            return;
+        try {
+            $viewer = Modules_Help4DiskUsage_Access::viewer();
+            $domains = Modules_Help4DiskUsage_Access::domains();
+            $this->view->domains = $domains;
+            $this->view->admin = $viewer['admin'] && !$viewer['impersonated'];
+            $this->view->report = null;
+            $this->view->domain = null;
+            $this->view->scanStatus = null;
+            $this->view->notice = $this->getParam('queued') === '1' ? 'Scan queued. Your previous report remains available.' : '';
+            if ($domains) {
+                $domain = Modules_Help4DiskUsage_Access::domain($this->getParam('domain', $domains[0]->getId()));
+                Modules_Help4DiskUsage_Access::viewer($viewer);
+                $this->view->domain = $domain;
+                $report = Modules_Help4DiskUsage_Store::report($domain);
+                $this->view->report = $report;
+                $policy = Modules_Help4DiskUsage_Store::effective($domain);
+                $this->view->ttl = $policy['ttl'];
+                $this->view->pending = Modules_Help4DiskUsage_Store::pending($domain);
+                $this->view->scanStatus = Modules_Help4DiskUsage_Store::status($domain);
+                $this->view->search = substr((string)$this->getParam('search', ''), 0, 128);
+                $this->view->sort = (string)$this->getParam('sort', $this->getParam('section') === 'entry_trees' ? 'entries' : 'bytes');
+                $this->view->result = Modules_Help4DiskUsage_Report::rows($report ?? [], $this->getParam('section', 'largest_files'),
+                    $this->view->search, $this->view->sort, $this->getParam('page', 1));
+            }
+            Modules_Help4DiskUsage_Access::viewer($viewer);
+        } catch (Throwable $e) {
+            // Do not leave prepared private data available to a replacement viewer or an error renderer.
+            $this->view->domains = [];
+            $this->view->admin = false;
+            $this->view->report = $this->view->domain = $this->view->scanStatus = null;
+            $this->view->notice = '';
+            unset($this->view->ttl, $this->view->pending, $this->view->search, $this->view->sort, $this->view->result);
+            throw new RuntimeException('Subscription unavailable');
         }
-        $domain = Modules_Help4DiskUsage_Access::domain($this->getParam('domain', $domains[0]->getId()));
-        $this->view->domain = $domain;
-        $report = Modules_Help4DiskUsage_Store::report($domain);
-        $this->view->report = $report;
-        $policy = Modules_Help4DiskUsage_Store::effective($domain);
-        $this->view->ttl = $policy['ttl'];
-        $this->view->pending = Modules_Help4DiskUsage_Store::pending($domain);
-        $this->view->scanStatus = Modules_Help4DiskUsage_Store::status($domain);
-        $this->view->search = substr((string)$this->getParam('search', ''), 0, 128);
-        $this->view->sort = (string)$this->getParam('sort', $this->getParam('section') === 'entry_trees' ? 'entries' : 'bytes');
-        $this->view->result = Modules_Help4DiskUsage_Report::rows($report ?? [], $this->getParam('section', 'largest_files'),
-            $this->view->search, $this->view->sort, $this->getParam('page', 1));
     }
 
     public function refreshAction()
