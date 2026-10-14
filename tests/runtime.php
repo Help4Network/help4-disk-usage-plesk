@@ -24,6 +24,10 @@ foreach (['nonexistent-runtime', PHP_BINARY] as $bad) {
     check($failed, 'Invalid runtime accepted');
 }
 pm_Context::$fixture = true;
+if (!in_array(PHP_OS_FAMILY, ['Linux', 'Windows'], true)) {
+    echo "Unsupported native runtime refused; subprocess transport cases require Linux/Windows (response fixtures run separately)\n";
+    exit;
+}
 foreach (['malformed', 'wrong-platform', 'not-ready', 'nonzero', 'oversized', 'timeout'] as $mode) {
     putenv('H4_RUNTIME_FIXTURE=' . $mode);
     $started = microtime(true);

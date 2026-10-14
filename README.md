@@ -50,6 +50,7 @@ php tests/controllers.php
 php tests/index_viewer.php
 php tests/scheduler.php
 php tests/runtime.php
+php tests/runtime_response.php
 php tests/process.php
 php tests/process_deadline.php
 php tests/lint.php

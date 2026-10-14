@@ -13,6 +13,9 @@ elif mode == "malformed":
     print("not json")
 else:
     print(json.dumps({"ok": mode != "not-ready",
-                      "platform": "wrong" if mode == "wrong-platform" else sys.platform}))
+                      "platform": "wrong" if mode == "wrong-platform" else sys.platform,
+                      "python": list(sys.version_info[:3]), "errors": [],
+                      "native_panel_validated": False, "private_storage_validated": False,
+                      "built_by": "https://help4network.com"}))
     if mode == "nonzero":
         sys.exit(2)
