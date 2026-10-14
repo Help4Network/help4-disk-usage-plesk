@@ -6,6 +6,7 @@ class Modules_Help4DiskUsage_Process
         if (!$command || $seconds < 1 || $seconds > 135 || $maximumBytes < 1 || $maximumBytes > 4194304) {
             throw new RuntimeException('Invalid subprocess limits');
         }
+        $deadline = hrtime(true) + $seconds * 1000000000;
         $path = null;
         $created = false;
         $output = null;
@@ -23,17 +24,17 @@ class Modules_Help4DiskUsage_Process
                 }
             }
             if (!is_resource($output)) { throw new RuntimeException('Subprocess storage unavailable'); }
+            if (hrtime(true) >= $deadline) { throw new RuntimeException('Subprocess exceeded safety limit'); }
             $null = PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';
             $pipes = [];
             // Windows anonymous pipes can block despite stream_set_blocking(false).
             $process = @proc_open($command, [0 => ['file', $null, 'r'], 1 => $output, 2 => ['file', $null, 'w']],
                 $pipes, null, null, ['bypass_shell' => true, 'suppress_errors' => true]);
             if (!is_resource($process)) { throw new RuntimeException('Subprocess unavailable'); }
-            $deadline = hrtime(true) + $seconds * 1000000000;
             do {
                 $status = proc_get_status($process);
                 $stat = fstat($output);
-                if (!$stat || $stat['size'] > $maximumBytes || hrtime(true) > $deadline) {
+                if (!$stat || $stat['size'] > $maximumBytes || hrtime(true) >= $deadline) {
                     throw new RuntimeException('Subprocess exceeded safety limit');
                 }
                 if (!$status['running']) { break; }
@@ -44,6 +45,7 @@ class Modules_Help4DiskUsage_Process
             if ($body === false || strlen($body) > $maximumBytes) {
                 throw new RuntimeException('Subprocess exceeded output limit');
             }
+            if (hrtime(true) >= $deadline) { throw new RuntimeException('Subprocess exceeded safety limit'); }
             return ['exit' => $status['exitcode'], 'output' => $body];
         } finally {
             if (is_resource($process)) {

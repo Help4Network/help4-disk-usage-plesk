@@ -47,6 +47,7 @@ jobs:
       - run: php tests/scheduler_deadline.php
       - run: php tests/runtime.php
       - run: php tests/process.php
+      - run: php tests/process_deadline.php
       - run: php tests/permissions.php
       - run: php tests/permissions_response.php
       - run: php tests/whmcs_scope.php
@@ -139,6 +140,7 @@ jobs:
           php tests/scheduler_deadline.php
           php tests/runtime.php
           php tests/process.php
+          php tests/process_deadline.php
           php tests/permissions.php
           php tests/permissions_response.php
           php tests/whmcs_scope.php
