@@ -6,8 +6,8 @@ This matrix describes the Plesk extension, not the separate cPanel/WHM/WHMCS pro
 | --- | --- | --- |
 | Largest files, recursive trees, entry-heavy trees, stale large files | Linux and Windows collector regressions | End-to-end subscription scans pending |
 | Relative paths, partial coverage, timestamps, growth | Collector, report and identity fixtures; six fresh synthetic templates | Native task completion and ownership transitions pending |
-| Search, sort, paging, path copy, safe CSV/JSON | Report/export fixtures; template browser QA | Authenticated role/UI/download QA pending |
-| File Manager jumps | Exact retained-path membership, kind, authorization and parent-routing fixtures | Native Linux/Windows destination and panel junction checks pending |
+| Search, sort, paging, path copy, safe CSV/JSON | Report/export fixtures; original-viewer/current-authorization/binding rechecks after IO and before publication; template browser QA | Authenticated role/UI/download and native session semantics pending |
+| File Manager jumps | Exact retained-path membership, kind, original-viewer/current-authorization/binding rechecks and parent-routing fixtures | Native Linux/Windows destination, session and panel junction checks pending |
 | Customer, reseller, additional-user and administrator isolation | Current-role/ownership/impersonation and foreign-action fixtures | Native multi-tenant negative tests pending |
 | Manual scan limits, finite queue, one worker | Actor/subscription/interval/server/lease/policy/token fixtures | Native concurrent requests and worker dispatch pending |
 | Native service-plan profiles and subscription overrides | Precedence, disabled-plan, conflict and policy-change fixtures | Native synchronization and lifecycle pending |

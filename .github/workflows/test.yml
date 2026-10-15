@@ -42,6 +42,7 @@ jobs:
       - run: php tests/release_authorization.php
       - run: php tests/controllers.php
       - run: php tests/index_viewer.php
+      - run: php tests/report_actions.php
       - run: php tests/settings.php
       - run: php tests/scheduler.php
       - run: php tests/scheduler_deadline.php
@@ -136,6 +137,7 @@ jobs:
           php tests/release_authorization.php
           php tests/controllers.php
           php tests/index_viewer.php
+          php tests/report_actions.php
           php tests/settings.php
           php tests/scheduler.php
           php tests/scheduler_deadline.php

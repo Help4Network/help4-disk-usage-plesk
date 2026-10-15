@@ -90,8 +90,13 @@ class IndexController extends pm_Controller_Action
 
     public function exportAction()
     {
+        $viewer = Modules_Help4DiskUsage_Access::viewer();
         $domain = Modules_Help4DiskUsage_Access::domain($this->getParam('domain'));
+        $id = $domain->getId();
+        $binding = Modules_Help4DiskUsage_Access::binding($domain);
+        $this->reportScope($viewer, $id, $binding);
         $report = Modules_Help4DiskUsage_Store::report($domain);
+        $this->reportScope($viewer, $id, $binding);
         if (!$report) {
             throw new RuntimeException('Report unavailable');
         }
@@ -117,19 +122,41 @@ class IndexController extends pm_Controller_Action
             $body = json_encode(Modules_Help4DiskUsage_Report::publicReport($report), JSON_THROW_ON_ERROR);
             $type = 'application/json; charset=UTF-8';
         }
-        $this->getResponse()->setHeader('Content-Type', $type, true)
+        $response = $this->getResponse();
+        $this->reportScope($viewer, $id, $binding);
+        $response->setHeader('Content-Type', $type, true)
             ->setHeader('Content-Disposition', 'attachment; filename="disk-audit.' . $format . '"', true)->setBody($body);
     }
 
     public function openAction()
     {
+        $viewer = Modules_Help4DiskUsage_Access::viewer();
         $domain = Modules_Help4DiskUsage_Access::domain($this->getParam('domain'));
+        $id = $domain->getId();
+        $binding = Modules_Help4DiskUsage_Access::binding($domain);
+        $this->reportScope($viewer, $id, $binding);
         $report = Modules_Help4DiskUsage_Store::report($domain);
+        $this->reportScope($viewer, $id, $binding);
         if (!$report) {
             throw new RuntimeException('Report unavailable');
         }
         $url = Modules_Help4DiskUsage_Report::fileManagerUrl($domain, $report, $this->getParam('path'), $this->getParam('kind'));
+        $this->reportScope($viewer, $id, $binding);
         $this->_redirect($url);
+    }
+
+    private function reportScope(array $viewer, $id, $binding)
+    {
+        try {
+            Modules_Help4DiskUsage_Access::viewer($viewer);
+            $current = Modules_Help4DiskUsage_Access::domain($id);
+            if (!hash_equals($binding, Modules_Help4DiskUsage_Access::binding($current))) {
+                throw new RuntimeException('Subscription unavailable');
+            }
+            Modules_Help4DiskUsage_Access::viewer($viewer);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Subscription unavailable');
+        }
     }
 
     private function settingsAdministrator($expected = null)

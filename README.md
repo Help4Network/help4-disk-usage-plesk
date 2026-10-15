@@ -22,6 +22,7 @@ The separate `help4_disk_usage_plesk` WHMCS addon now includes candidate custome
 - Opt-in native scheduled stale-report rotation, administrator-selected small batches and cooldown, with the same shared admission caps as manual refreshes.
 - CLI Python/platform diagnostics and fail-closed runtime checks before settings saves and scans.
 - Current Plesk authorization on reports, refresh, export and file jumps. Worker authorization before and after scans. Ownership/home/name/GUID changes invalidate cached reports.
+- Export/File Manager actions retain their original viewer identity and recheck current authorization and subscription binding after private report reads and before attachment/redirect publication. SDK fixtures cover late access loss; native session reload and continuously atomic authorization remain validation gates.
 
 No deletion, rename, file-content reading, public arbitrary-root endpoint or automatic page-refresh loop. Cleanup stays in Plesk File Manager and the application. Bytes are logical file sizes, **not quota/allocated disk usage**; hard-link entries count separately. Mail/databases/backups outside the home are excluded. Windows reports filesystem entries, not POSIX inode quota. Symlinks, junctions, reparse points, cross-device trees and unsafe names are not followed.
 
@@ -48,6 +49,7 @@ php tests/releases.php
 php tests/release_authorization.php
 php tests/controllers.php
 php tests/index_viewer.php
+php tests/report_actions.php
 php tests/scheduler.php
 php tests/runtime.php
 php tests/runtime_response.php
