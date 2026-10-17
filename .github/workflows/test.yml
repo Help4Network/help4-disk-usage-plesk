@@ -17,7 +17,6 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests -v
       - run: python scripts/package.py
-      - run: python scripts/package_whmcs.py
   php:
     strategy:
       fail-fast: false
@@ -52,12 +51,6 @@ jobs:
       - run: php tests/process_deadline.php
       - run: php tests/permissions.php
       - run: php tests/permissions_response.php
-      - run: php tests/whmcs_scope.php
-      - run: php tests/whmcs_report.php
-      - run: php tests/whmcs_transport.php
-      - run: php tests/whmcs_native.php
-      - run: php tests/whmcs_health.php
-      - run: php tests/whmcs_services.php
       - run: php tests/lifecycle.php
       - run: php tests/lifecycle_processes.php
       - run: php tests/executable_preflight.php
@@ -147,12 +140,6 @@ jobs:
           php tests/process_deadline.php
           php tests/permissions.php
           php tests/permissions_response.php
-          php tests/whmcs_scope.php
-          php tests/whmcs_report.php
-          php tests/whmcs_transport.php
-          php tests/whmcs_native.php
-          php tests/whmcs_health.php
-          php tests/whmcs_services.php
           php tests/lifecycle.php
           php tests/lifecycle_processes.php
           php tests/executable_preflight.php
@@ -160,4 +147,26 @@ jobs:
       - name: Build portable preview artifact
         run: |
           python scripts/package.py
-          python scripts/package_whmcs.py
+  whmcs-source-contract:
+    name: Separate WHMCS bridge contract (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Help4Network/help4-disk-usage-whmcs
+          ref: e3452328ff41cb02f7e1900de6d62ba22c55c4ab
+          path: whmcs-contract
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, pdo_sqlite
+      - name: Native bridge against separately pinned WHMCS adapter, not installed-framework proof
+        env:
+          H4DU_PLESK_SOURCE: ${{ github.workspace }}
+        run: php whmcs-contract/tests/plesk_transport.php

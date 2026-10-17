@@ -6,7 +6,7 @@ Read-only subscription-scoped disk and filesystem-entry audits for **Plesk Obsid
 
 The repository's `LICENSE` records redistribution permission and attribution; it is not a paid activation requirement. Plesk, WHMCS and Windows Server platform licenses and terms are separate from this free extension. References to licensed native validation mean testing inside those vendor platforms, not activating Help4 Disk Usage. Free availability does not change the preview validation and release gates described below.
 
-The separate `help4_disk_usage_plesk` WHMCS addon now includes candidate customer reports/exports, native File Manager navigation, current-entitlement mappings, a paginated admin extension-health view and an opt-in verified-TLS Plesk bridge. It has a separate installable ZIP. [Installation and acceptance](docs/whmcs.md) remain gated on licensed native WHMCS/Plesk validation; the cPanel addon is not Plesk compatibility proof.
+Both WHMCS adapters now live in the standalone [Help4 Disk Usage for WHMCS](https://github.com/Help4Network/help4-disk-usage-whmcs) repository, with independent versions, tests and packages. This repository installs only the native Plesk extension and retains its opt-in XML API bridge. Existing Plesk addon ID/settings/private tables do not change. WHMCS provisioning support alone does not install the extension or approve mappings. [Acceptance](docs/whmcs.md) remains a separate native WHMCS/Plesk gate; the cPanel adapter is not Plesk proof.
 
 **0.3.0 development preview: not yet approved for shared production hosting.** Native Linux AND Windows installation, role isolation, GUI, scheduling and upgrade gates must pass before stable 1.0.0. See [validation](docs/validation.md) and the [Linux/Windows target matrix](docs/platform-support.md). Automated CI is not Plesk certification.
 
@@ -57,15 +57,10 @@ php tests/process.php
 php tests/process_deadline.php
 php tests/lint.php
 php tests/permissions.php
-php tests/whmcs_scope.php
-php tests/whmcs_report.php
-php tests/whmcs_transport.php
-php tests/whmcs_native.php
 php tests/lifecycle.php
 php tests/executable_preflight.php
 php tests/queue_lock.php
 python3 scripts/package.py
-python3 scripts/package_whmcs.py
 ```
 
 Windows: use `py -3` instead of `python3`. Packaging is cross-platform, without Bash. CI runs actual native Windows junction/handle tests separately from Linux descriptor tests.
@@ -121,7 +116,7 @@ Linux uninstall: `plesk bin extension --uninstall help4-disk-usage`. Windows: `p
 
 The [feature evidence matrix](docs/features.md) distinguishes source/CI coverage from native Plesk validation and planned integrations.
 
-Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`). Six fresh 0.3.0 actual-template synthetic captures are included with captions and alt text in the marketing guide; the builder fails closed on missing version-matched captures. Existing 0.2.0 screenshots/kits remain historical preview material. The kit includes public documentation, labeled synthetic screenshots, the installable preview, and a SHA-256 manifest, excluding private lab evidence, credentials and security-scan artifacts. It is not the stable 1.0.0 launch package.
+Build the single tutorial handoff ZIP with `python3 scripts/tutorial_bundle.py` (Windows: `py -3 scripts/tutorial_bundle.py`). Six fresh 0.3.0 actual-template synthetic captures are included with captions and alt text in the marketing guide; the builder fails closed on missing version-matched captures. Existing 0.2.0 screenshots/kits remain historical preview material. The native kit includes public documentation, synthetic screenshots, native preview and checksums, not WHMCS addon runtime. Obtain the addon separately from its canonical repository. Private lab evidence, credentials and security-scan artifacts are excluded. It is not the stable 1.0.0 launch package.
 
 ## Official SDK References
 

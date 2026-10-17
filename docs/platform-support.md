@@ -16,7 +16,7 @@ Vendor list reviewed 2026-10-09. A supported Plesk/OS combination is a target, n
 
 Respect the installed Plesk build's OS minimums, lifecycle and paid ELS entitlements. The vendor requirements page includes restrictions that may supersede a historical OS list. Do not advertise obsolete OSes as new-install recommendations. Unsupported Windows clients, network/UNC homes, reparse-point ancestors and non-NTFS Plesk installations are not targets.
 
-macOS is a development/test host, not a native Plesk installation target. Its separately named CI job runs portable collector, PHP lifecycle, authorization and WHMCS report fixtures, packages the same preview ZIP and verifies the runtime's unsupported-platform result. These results do not substitute for Windows Server/NTFS, Linux descriptor, licensed Plesk or native GUI validation. Windows CI retains both PowerShell 5.1 and 7 ACL checks plus Python/PHP regressions.
+macOS is a development/test host, not a native Plesk installation target. Its separately named CI job runs portable collector, PHP lifecycle and authorization fixtures, packages the same preview ZIP and verifies the runtime's unsupported-platform result. WHMCS report fixtures now belong to the [standalone addon repository](https://github.com/Help4Network/help4-disk-usage-whmcs); this native repository checks the separately pinned bridge contract on Linux and Windows. These results do not substitute for Windows Server/NTFS, Linux descriptor, licensed Plesk or native GUI validation. Windows CI retains both PowerShell 5.1 and 7 ACL checks plus Python/PHP regressions.
 
 ## Native Diagnostics
 

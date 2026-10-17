@@ -152,6 +152,6 @@ plesk bin extension --uninstall help4-disk-usage
 plesk bin extension.exe --uninstall help4-disk-usage
 ```
 
-Verify task/data cleanup on both OSes before stable release. WHMCS integration is [planned separately](whmcs.md); this preview does not supply a working Plesk WHMCS adapter.
+Verify task/data cleanup on both OSes before stable release. WHMCS adapters for both panels are implemented as separate candidate source in [the standalone repository](https://github.com/Help4Network/help4-disk-usage-whmcs), not bundled into this native extension. Follow its independent installation and native framework/MySQL/TLS/role acceptance gates.
 
 Built by [Help4 Network](https://help4network.com). MIT licensed; not endorsed or certified by Plesk.
