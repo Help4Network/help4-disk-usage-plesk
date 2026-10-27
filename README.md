@@ -28,7 +28,7 @@ No deletion, rename, file-content reading, public arbitrary-root endpoint or aut
 
 ## Requirements
 
-Plesk Obsidian 18.0.55+, administrator-installed **Python 3.10+**, local subscription homes and private extension storage. No Python packages required. Python is not assumed to ship with Plesk.
+Plesk Obsidian 18.0.55+, administrator-installed **Python 3.10+**, local subscription homes and private extension storage. These are API floors, not secure patch baselines: use a supported, patched platform/Python branch. Python 3.10 is upstream end-of-life as of October 2026. See the [current advisory review](docs/security-advisories.md). No Python packages required. Python is not assumed to ship with Plesk.
 
 | Platform | Default runtime setting | Collector protection |
 | --- | --- | --- |

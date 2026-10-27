@@ -2,6 +2,8 @@
 
 Vendor list reviewed 2026-10-09. A supported Plesk/OS combination is a target, not evidence that this preview passed native shared-hosting validation. The same extension ZIP is used on Linux and Windows. Python 3.10+ must be separately installed under administrator control; do not replace an older OS's system Python or weaken isolation to meet that requirement.
 
+Security guidance reviewed 2026-10-27: Python 3.10 is now upstream end-of-life. The API floor is not a security support recommendation. Use a current security-supported branch or documented vendor backport, and verify panel-engine/PHP handler fixes separately. See the [advisory applicability review](security-advisories.md). The OS table retains its dated vendor review; this note does not recertify those targets.
+
 | Vendor OS family | Target versions / restrictions | Current extension evidence |
 | --- | --- | --- |
 | Ubuntu | 26.04, 24.04, 22.04; older versions require vendor lifecycle review | Linux runtime/collector CI; native panel QA pending |
